@@ -241,7 +241,7 @@ nextExponentOfTwo n = find (\i -> n <= 2^i) [0 .. lastExponentOfTwo]
 --   power of two with a default element.
 --
 -- /Warning: this function crashes if the input list length is larger than any/
--- /power of two in the type 'Int'./
+-- /power of two in the type 'Int'. However, this is very unlikely./
 fromListWithDefault :: a -> [a] -> BinList a
 fromListWithDefault e xs =
   let l = Prelude.length xs
