@@ -10,6 +10,12 @@
 --   It is impossible for the user of this library to create a binary list
 --   whose length is /not/ a power of two.
 --
+--   Since many names in this module crashes with the names of some "Prelude"
+--   functions, you probably want to import this module this way:
+--
+-- > import Data.BinaryList (BinList)
+-- > import qualified Data.BinaryList as BL
+--
 module Data.BinaryList (
     -- * Type
     BinList
@@ -17,8 +23,6 @@ module Data.BinaryList (
   , singleton
   , append
   , replicate
-  , zip
-  , zipWith
     -- * Queries
   , lengthIndex
   , length
@@ -30,13 +34,19 @@ module Data.BinaryList (
   , fold
     -- * Transformation
   , reverse
+    -- * Tuples
+  , joinPairs
+  , disjoinPairs
+    -- * Zipping and Unzipping
+  , zip , unzip
+  , zipWith
     -- * Lists
   , fromList
   , fromListWithDefault
   , toList
   ) where
 
-import Prelude hiding (length,lookup,replicate,head,last,zip,zipWith,reverse)
+import Prelude hiding (length,lookup,replicate,head,last,zip,unzip,zipWith,reverse)
 import qualified Prelude
 import Data.Bits ((.&.))
 import Foreign.Storable (sizeOf)
@@ -90,31 +100,6 @@ append xs ys =
          then Just $ ListNode (i+1) xs ys
          else Nothing
 
--- | /O(n)/. Zip two binary lists using an operator.
-zipWith :: (a -> b -> c) -> BinList a -> BinList b -> BinList c
-zipWith f = go
-  where
-    -- Recursion
-    go xs@(ListNode n l r) ys@(ListNode n' l' r')
-         -- If both lists have the same length, recurse assuming it
-         -- to avoid comparisons.
-       | n == n'   = ListNode n (goEquals l l') (goEquals r r')
-         -- If the first list is larger, the second fits entirely in
-         -- the left branch of the first.
-       | n >  n'   = go l ys
-         -- If the second list is larger, the first fits entirely in
-         -- the left branch of the second.
-       | otherwise = go xs l'
-    go xs ys       = ListEnd $ f (head xs) (head ys)
-    -- Recursion assuming both lists have the same length
-    goEquals (ListNode n l r) (ListNode _ l' r') =
-                     ListNode n (goEquals l l') (goEquals r r')
-    goEquals xs ys = ListEnd $ f (head xs) (head ys)
-
--- | /O(n)/. Zip two binary lists in pairs.
-zip :: BinList a -> BinList b -> BinList (a,b)
-zip = zipWith (,)
-
 -- | /O(1)/. Split a binary list into two sublists of half the length,
 --   unless the list only contains one element. In that case, it
 --   just returns that element.
@@ -149,6 +134,65 @@ last (ListEnd x) = x
 reverse :: BinList a -> BinList a
 reverse (ListNode n l r) = ListNode n (reverse r) (reverse l)
 reverse xs = xs
+
+------------------------------
+-- Transformations with tuples
+
+-- | /O(n)/. Transform a list of pairs into a flat list. The
+--   resulting list will have twice more elements than the
+--   original.
+joinPairs :: BinList (a,a) -> BinList a
+joinPairs (ListEnd (x,y)) = ListNode 1 (ListEnd x) (ListEnd y)
+joinPairs (ListNode n l r) = ListNode (n+1) (joinPairs l) (joinPairs r)
+
+-- | /O(n)/. Opposite transformation of 'joinPairs'. It halves
+--   the number of elements of the input. As a result, when
+--   applied to a binary list with a single element, it returns
+--   'Nothing'.
+disjoinPairs :: BinList a -> Maybe (BinList (a,a))
+disjoinPairs (ListEnd _) = Nothing
+disjoinPairs xs = Just $ disjoinPairsNodes xs
+
+disjoinPairsNodes :: BinList a -> BinList (a,a)
+disjoinPairsNodes (ListNode _ (ListEnd x) (ListEnd y)) = ListEnd (x,y)
+disjoinPairsNodes (ListNode n l r) = ListNode (n-1) (disjoinPairsNodes l) (disjoinPairsNodes r)
+disjoinPairsNodes _ = error "disjoinPairsNodes: bug. Please, report this with an example input."
+
+------------------------
+-- Zipping and Unzipping
+
+-- | /O(n)/. Zip two binary lists using an operator.
+zipWith :: (a -> b -> c) -> BinList a -> BinList b -> BinList c
+zipWith f = go
+  where
+    -- Recursion
+    go xs@(ListNode n l r) ys@(ListNode n' l' r')
+         -- If both lists have the same length, recurse assuming it
+         -- to avoid comparisons.
+       | n == n'   = ListNode n (goEquals l l') (goEquals r r')
+         -- If the first list is larger, the second fits entirely in
+         -- the left branch of the first.
+       | n >  n'   = go l ys
+         -- If the second list is larger, the first fits entirely in
+         -- the left branch of the second.
+       | otherwise = go xs l'
+    go xs ys       = ListEnd $ f (head xs) (head ys)
+    -- Recursion assuming both lists have the same length
+    goEquals (ListNode n l r) (ListNode _ l' r') =
+                     ListNode n (goEquals l l') (goEquals r r')
+    goEquals xs ys = ListEnd $ f (head xs) (head ys)
+
+-- | /O(n)/. Zip two binary lists in pairs.
+zip :: BinList a -> BinList b -> BinList (a,b)
+zip = zipWith (,)
+
+-- | /O(n)/. Unzip a binary list of pairs.
+unzip :: BinList (a,b) -> (BinList a, BinList b)
+unzip (ListEnd (x,y)) = (ListEnd x, ListEnd y)
+unzip (ListNode n l r) =
+  let (la,lb) = unzip l
+      (ra,rb) = unzip r
+  in  (ListNode n la ra, ListNode n lb rb)
 
 -----------------------------
 -- Transforming from/to lists
