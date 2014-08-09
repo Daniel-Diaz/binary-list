@@ -94,11 +94,10 @@ lookup _ _ = Nothing
 --   if both lists have the same length. If this condition
 --   is not hold, 'Nothing' is returned.
 append :: BinList a -> BinList a -> Maybe (BinList a)
-append xs ys =
-  let i = lengthIndex xs
-  in  if i == lengthIndex ys
-         then Just $ ListNode (i+1) xs ys
-         else Nothing
+append xs ys = 
+  if (lengthIndex xs) == (lengthIndex ys)
+     then Just $ ListNode (i+1) xs ys
+     else Nothing
 
 -- | /O(1)/. Split a binary list into two sublists of half the length,
 --   unless the list only contains one element. In that case, it
