@@ -59,7 +59,7 @@ data BinList a =
         -- Given ListNode n l r:
         --   * n >= 1.
         --   * Both l and r have 2^(n-1) elements.
-      | ListNode Int (BinList a) (BinList a)
+      | ListNode {-# UNPACK #-} !Int (BinList a) (BinList a)
         deriving Eq
 
 -- | /O(1)/. Build a list with a single element.
