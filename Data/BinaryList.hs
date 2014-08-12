@@ -48,7 +48,6 @@ module Data.BinaryList (
 
 import Prelude hiding (length,lookup,replicate,head,last,zip,unzip,zipWith,reverse)
 import qualified Prelude
-import Data.Bits ((.&.))
 import Foreign.Storable (sizeOf)
 import Data.List (find)
 
@@ -115,6 +114,11 @@ replicate n x =
   let b = replicate (n-1) x -- Both branches of the binary list
   in  ListNode n b b -- Note that both branches are the same shared object
 
+{-# RULES
+      "Data.BinaryList: fmap/replicate"
+         forall f n x. fmap f (replicate n x) = replicate n (f x)
+  #-}
+
 -- | Fold a binary list using an operator.
 fold :: (a -> a -> a) -> BinList a -> a
 fold f (ListNode _ l r) = f (fold f l) (fold f r)
@@ -134,6 +138,11 @@ last (ListEnd x) = x
 reverse :: BinList a -> BinList a
 reverse (ListNode n l r) = ListNode n (reverse r) (reverse l)
 reverse xs = xs
+
+{-# RULES
+      "Data.BinaryList: reverse/reverse"
+         forall xs. reverse (reverse xs) = xs
+  #-}
 
 ------------------------------
 -- Transformations with tuples
@@ -211,7 +220,7 @@ exponentInBasisTwo n =
 fromList :: [a] -> Maybe (BinList a)
 fromList xs = fmap (fromListBuilder xs) $ exponentInBasisTwo $ Prelude.length xs
 
--- | /O(n)/. This functions builds a binary list from a linked list, assuming
+-- | /O(n)/. This function builds a binary list from a linked list, assuming
 --   the length of the input list is a power of two.
 fromListBuilder :: [a] -- ^ Input list
                 -> Int -- ^ Length index of the input list
@@ -246,8 +255,28 @@ fromListWithDefault :: a -> [a] -> BinList a
 fromListWithDefault e xs =
   let l = Prelude.length xs
   in  case nextExponentOfTwo l of
-        Just n -> fromListBuilder (xs ++ Prelude.replicate (2^n - l) e) n
+        Just n -> fromListBuilderWithDefault e xs l n
         _ -> error "fromListWithDefault: input list is too big."
+
+-- | /O(n)/. Build a binary list from any linked list, providing a default element
+--   to use when in need of completing elements to the next power of two,
+--   and the length index of the output binary list.
+fromListBuilderWithDefault :: a -- ^ Default element
+                           -> [a] -- ^ Input list
+                           -> Int -- ^ Lenght of the input list
+                           -> Int -- ^ Length index of the list expanded
+                                  --   to the next power of two
+                           -> BinList a
+fromListBuilderWithDefault e = go
+  where
+    go [] _ n = replicate n e
+    go xs l n =
+      let m = n - 1
+          l' = 2^m
+          (ys,zs) = splitAt l' xs
+      in  if l <= l'
+             then ListNode n (go xs l m) (replicate m e)
+             else ListNode n (fromListBuilder ys m) (go zs (l - l') m)
 
 -- | /O(n)/. Build a linked list from a binary list.
 toList :: BinList a -> [a]
