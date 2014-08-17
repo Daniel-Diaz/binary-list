@@ -29,6 +29,8 @@ module Data.BinaryList (
   , lookup
   , head
   , last
+  , minimum
+  , maximum
     -- * Decontruction
   , split
   , fold
@@ -46,7 +48,9 @@ module Data.BinaryList (
   , toList
   ) where
 
-import Prelude hiding (length,lookup,replicate,head,last,zip,unzip,zipWith,reverse)
+import Prelude hiding ( length,lookup,replicate,head,last,zip,unzip,zipWith,reverse
+                      , minimum, maximum
+                        )
 import qualified Prelude
 import Foreign.Storable (sizeOf)
 import Data.List (find)
@@ -143,6 +147,14 @@ reverse xs = xs
       "Data.BinaryList: reverse/reverse"
          forall xs. reverse (reverse xs) = xs
   #-}
+
+minimum :: Ord a => BinList a -> a
+minimum (ListEnd x) = x
+minimum (ListNode _ l r) = min (minimum l) (minimum r)
+
+maximum :: Ord a => BinList a -> a
+maximum (ListEnd x) = x
+maximum (ListNode _ l r) = max (maximum l) (maximum r)
 
 ------------------------------
 -- Transformations with tuples
