@@ -1,5 +1,5 @@
 name:                binary-list
-version:             0.1.0.2
+version:             0.1.1.0
 synopsis:            Lists of size length a power of two.
 description:         Some algorithmic problems work only when the input list
                      has length a power of two. This library provides with a
@@ -15,12 +15,12 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Data.BinaryList
+  other-modules:       Data.BinaryList.Internal
   build-depends:       base == 4.*
   default-language:    Haskell2010
-  ghc-options:         -Wall
+  ghc-options:         -Wall -fno-warn-orphans
 
 Source-repository head
   type: git
   location: git://github.com/Daniel-Diaz/binary-list.git
-
 

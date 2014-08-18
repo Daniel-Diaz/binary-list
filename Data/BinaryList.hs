@@ -54,17 +54,8 @@ import Prelude hiding ( length,lookup,replicate,head,last,zip,unzip,zipWith,reve
 import qualified Prelude
 import Foreign.Storable (sizeOf)
 import Data.List (find)
+import Data.BinaryList.Internal
 
--- | A binary list is a list containing a power of two elements.
---   Note that a binary list is never empty.
-data BinList a =
-        -- Single element list.
-        ListEnd a
-        -- Given ListNode n l r:
-        --   * n >= 1.
-        --   * Both l and r have 2^(n-1) elements.
-      | ListNode {-# UNPACK #-} !Int (BinList a) (BinList a)
-        deriving Eq
 
 -- | /O(1)/. Build a list with a single element.
 singleton :: a -> BinList a
@@ -148,10 +139,12 @@ reverse xs = xs
          forall xs. reverse (reverse xs) = xs
   #-}
 
+-- | 
 minimum :: Ord a => BinList a -> a
 minimum (ListEnd x) = x
 minimum (ListNode _ l r) = min (minimum l) (minimum r)
 
+-- |
 maximum :: Ord a => BinList a -> a
 maximum (ListEnd x) = x
 maximum (ListNode _ l r) = max (maximum l) (maximum r)
@@ -297,8 +290,7 @@ toList = go []
     go xs (ListNode _ l r) = go (go xs r) l
     go xs (ListEnd x) = x : xs
 
------------------------
--- Some class instances
+-- Show and Functor instances
 
 instance Show a => Show (BinList a) where
   show = show . toList
@@ -306,4 +298,3 @@ instance Show a => Show (BinList a) where
 instance Functor BinList where
   fmap f (ListNode n l r) = ListNode n (fmap f l) (fmap f r)
   fmap f (ListEnd x) = ListEnd $ f x
-
