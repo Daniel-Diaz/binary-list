@@ -139,12 +139,12 @@ reverse xs = xs
          forall xs. reverse (reverse xs) = xs
   #-}
 
--- | 
+-- | /O(n)/. Retrieves the minimum element of a binary list.
 minimum :: Ord a => BinList a -> a
 minimum (ListEnd x) = x
 minimum (ListNode _ l r) = min (minimum l) (minimum r)
 
--- |
+-- | /O(n)/. Retrieves the maximum element of a binary list.
 maximum :: Ord a => BinList a -> a
 maximum (ListEnd x) = x
 maximum (ListNode _ l r) = max (maximum l) (maximum r)
@@ -290,6 +290,7 @@ toList = go []
     go xs (ListNode _ l r) = go (go xs r) l
     go xs (ListEnd x) = x : xs
 
+-----------------------------
 -- Show and Functor instances
 
 instance Show a => Show (BinList a) where
