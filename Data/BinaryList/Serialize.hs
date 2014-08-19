@@ -90,7 +90,7 @@ data DecodedBinList a =
 
 -- | The result of decoding a binary list, which produces a list of binary
 --   lists of increasing size, ending in either a decoding error or a final
---   binary list. When this is the result of 'decodeBinListIncremental', it
+--   binary list. When this is the result of 'decodeBinList', it
 --   contains sublists of order 1, 2, 4, 8, ... up to the order of the total
 --   list (unless an error has been encountered first). This sublists are
 --   either a section starting at the left, or a section starting at the right,
