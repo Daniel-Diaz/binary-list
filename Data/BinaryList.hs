@@ -225,17 +225,6 @@ exponentInBasisTwo n =
 fromList :: [a] -> Maybe (BinList a)
 fromList xs = fmap (fromListBuilder xs) $ exponentInBasisTwo $ Prelude.length xs
 
--- | /O(n)/. This function builds a binary list from a linked list, assuming
---   the length of the input list is a power of two.
-fromListBuilder :: [a] -- ^ Input list
-                -> Int -- ^ Length index of the input list
-                -> BinList a
-fromListBuilder [x] _ = ListEnd x
-fromListBuilder xs  n =
-  let m = n - 1 -- Length index of a single branch
-      (l,r) = splitAt (2^m) xs
-  in  ListNode n (fromListBuilder l m) (fromListBuilder r m)
-
 -- | /O(1)/. This is the last exponent that has power of two defined in the type 'Int'.
 --
 -- /Note: This value is system dependent, since the type 'Int' varies in size/
