@@ -127,8 +127,11 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
               -- If the final length index has been reached, we stop decoding.
               then FinalResult xs input
               -- Otherwise, we read another chunk of data of the same size of
-              -- the already decoded data.
-              else case runGetOrFail (replicateM (2^i) f) input of
+              -- the already decoded data, prepending the accumulated data as
+              -- a partial result.
+              else PartialResult xs $ case runGetOrFail (replicateM (2^i) f) input of
+                     -- In case of error, we return the accumulated result
+                     -- followed by a decoding error.
                      Left (r,_,err) -> DecodingError err r
                      Right (r,_,list) ->
                        let -- Binary list of new data
@@ -139,9 +142,8 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
                            zs = if d == FromLeft
                                    then ListNode (i+1) xs ys
                                    else ListNode (i+1) ys xs
-                           -- The current accumulator is returned as a partial result, and
-                           -- the new list is fed to the next recursion step.
-                       in  PartialResult xs $ go r zs
+                           -- The new list is fed to the next recursion step.
+                       in  go r zs
 
 -- | Translate an encoded binary list to a bytestring.
 encodedToByteString :: EncodedBinList -> ByteString
