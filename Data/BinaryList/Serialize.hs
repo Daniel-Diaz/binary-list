@@ -139,9 +139,9 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
                            zs = if d == FromLeft
                                    then ListNode (i+1) xs ys
                                    else ListNode (i+1) ys xs
-                           -- The Partial result is returned, and used again recurively to
-                           -- build the next binary list.
-                       in  PartialResult zs $ go r zs
+                           -- The current accumulator is returned as a partial result, and
+                           -- the new list is fed to the next recursion step.
+                       in  PartialResult xs $ go r zs
 
 -- | Translate an encoded binary list to a bytestring.
 encodedToByteString :: EncodedBinList -> ByteString
