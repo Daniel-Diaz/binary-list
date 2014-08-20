@@ -18,6 +18,10 @@
 -- > import Data.BinaryList (BinList)
 -- > import qualified Data.BinaryList as BL
 --
+--   Remember that binary lists are an instance of the 'Foldable' and 'Traversable'
+--   classes. If you are missing a function here, look for functions using those
+--   instances.
+--
 module Data.BinaryList (
     -- * Type
     BinList
