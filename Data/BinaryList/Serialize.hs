@@ -30,7 +30,8 @@ import Data.Binary.Get
 -- Bytestrings
 import Data.ByteString.Lazy (ByteString)
 -- Utils
-import Control.Monad (replicateM)
+import Control.Applicative (Applicative,(<$>),pure,(<*>))
+import Control.Applicative.Backwards
 
 -- | Encode a binary list using the 'Binary' instance of
 --   its elements.
@@ -119,16 +120,21 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
     Left (r,_,err) -> DecodingError err r
     Right (r,_,x) -> go r (ListEnd x)
   where
-    -- | To avoid looking at the direction in each recursive step,
-    --   we provide a function to append newly read data with the
-    --   accumulated binary list depending on the direction. Since the
-    --   new data is of the same size as the accumulated binary list,
-    --   we can append them safely just by using 'ListNode'.
+    -- | Function to get binary trees using the supplied 'Get' value.
+    -- getBinList :: Int -> Get (BinList a)
+    getBinList =
+       case d of
+         FromLeft -> \i -> buildFromLeft  i f
+         _        -> \i -> buildFromRight i f
+
+    -- | Function to append two binary lists of given length index,
+    --   where the order of appending depends on the encoding
+    --   direction.
     --
     -- recAppend :: Int -> BinList a -> BinList a -> BinList a
-    recAppend i = case d of
-       FromLeft    -> ListNode (i+1)
-       _ -> \xs ys -> ListNode (i+1) (reverse ys) xs
+    recAppend = case d of
+       FromLeft -> \i ->        ListNode (i+1)
+       _        -> \i -> flip $ ListNode (i+1)
 
     -- | Recursive decoding function.
     --
@@ -143,16 +149,31 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
               -- Otherwise, we read another chunk of data of the same size of
               -- the already decoded data, prepending the accumulated data as
               -- a partial result.
-              else PartialResult xs $ case runGetOrFail (replicateM (2^i) f) input of
+              else PartialResult xs $ case runGetOrFail (getBinList i) input of
                      -- In case of error, we return a decoding error.
                      Left (r,_,err) -> DecodingError err r
-                     Right (r,_,list) ->
-                       let -- Otherwise, we build a new binary list with the collected
-                           -- new data.
-                           ys = fromListBuilder list i
-                           -- The new list is appended with the accumulated list and fed
+                     Right (r,_,ys) ->
+                       let -- The new list is appended with the accumulated list and fed
                            -- to the next recursion step.
                        in  go r $ recAppend i xs ys
+
+{-
+
+Functions 'buildFromLeft' and 'buildFromRight' might be useful for
+users, so they might be promoted to "Data.BinaryList" in the future.
+
+-}
+
+-- | Build a binary tree from applicative actions, from left to right.
+buildFromLeft :: Applicative f => Int -> f a -> f (BinList a)
+buildFromLeft i f = go i
+  where
+    go 0 = ListEnd  <$> f
+    go n = ListNode <$> pure n <*> go (n-1) <*> go (n-1)
+
+-- | Build a binary tree from applicative actions, from right to left.
+buildFromRight :: Applicative f => Int -> f a -> f (BinList a)
+buildFromRight i = forwards . buildFromLeft i . Backwards
 
 -- | Translate an encoded binary list to a bytestring.
 encodedToByteString :: EncodedBinList -> ByteString
