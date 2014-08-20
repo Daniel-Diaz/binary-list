@@ -19,7 +19,6 @@ module Data.BinaryList.Serialize (
    , encodedFromByteString
    ) where
 
-import Prelude hiding (reverse)
 -- Binary lists
 import Data.BinaryList.Internal
 import Data.BinaryList
@@ -29,9 +28,6 @@ import Data.Binary.Put
 import Data.Binary.Get
 -- Bytestrings
 import Data.ByteString.Lazy (ByteString)
--- Utils
-import Control.Applicative (Applicative,(<$>),pure,(<*>))
-import Control.Applicative.Backwards
 
 -- | Encode a binary list using the 'Binary' instance of
 --   its elements.
@@ -121,11 +117,13 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
     Right (r,_,x) -> go r (ListEnd x)
   where
     -- | Function to get binary trees using the supplied 'Get' value.
+    --   The order of the elements depends on the encoding direction.
+    --
     -- getBinList :: Int -> Get (BinList a)
     getBinList =
        case d of
-         FromLeft -> \i -> buildFromLeft  i f
-         _        -> \i -> buildFromRight i f
+         FromLeft -> \i -> replicateA  i f
+         _        -> \i -> replicateAR i f
 
     -- | Function to append two binary lists of given length index,
     --   where the order of appending depends on the encoding
@@ -156,24 +154,6 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
                        let -- The new list is appended with the accumulated list and fed
                            -- to the next recursion step.
                        in  go r $ recAppend i xs ys
-
-{-
-
-Functions 'buildFromLeft' and 'buildFromRight' might be useful for
-users, so they might be promoted to "Data.BinaryList" in the future.
-
--}
-
--- | Build a binary tree from applicative actions, from left to right.
-buildFromLeft :: Applicative f => Int -> f a -> f (BinList a)
-buildFromLeft i f = go i
-  where
-    go 0 = ListEnd  <$> f
-    go n = ListNode <$> pure n <*> go (n-1) <*> go (n-1)
-
--- | Build a binary tree from applicative actions, from right to left.
-buildFromRight :: Applicative f => Int -> f a -> f (BinList a)
-buildFromRight i = forwards . buildFromLeft i . Backwards
 
 -- | Translate an encoded binary list to a bytestring.
 encodedToByteString :: EncodedBinList -> ByteString

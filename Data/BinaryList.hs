@@ -23,6 +23,8 @@ module Data.BinaryList (
   , singleton
   , append
   , replicate
+  , replicateA
+  , replicateAR
     -- * Queries
   , lengthIndex
   , length
@@ -55,6 +57,8 @@ import qualified Prelude
 import Foreign.Storable (sizeOf)
 import Data.List (find)
 import Data.BinaryList.Internal
+import Control.Applicative (Applicative (..),(<$>))
+import Control.Applicative.Backwards
 
 
 -- | /O(1)/. Build a list with a single element.
@@ -104,15 +108,29 @@ split (ListEnd x) = Left x
 -- | /O(log n)/. Calling @replicate n x@ builds a binary list with
 --   @2^n@ occurences of @x@.
 replicate :: Int -> a -> BinList a
-replicate 0 x = ListEnd x
-replicate n x =
-  let b = replicate (n-1) x -- Both branches of the binary list
-  in  ListNode n b b -- Note that both branches are the same shared object
+replicate n x = go n
+  where
+    go 0 = ListEnd x
+    go i = let b = go (n-1) -- Both branches of the binary list
+           in  ListNode i b b -- Note that both branches are the same shared object
 
 {-# RULES
       "Data.BinaryList: fmap/replicate"
          forall f n x. fmap f (replicate n x) = replicate n (f x)
   #-}
+
+-- | Calling @replicateA n f@ builds a binary list collecting the results of
+--   executing the applicative action @f@ @2^n@ times.
+replicateA :: Applicative f => Int -> f a -> f (BinList a)
+replicateA n f = go n
+  where
+    go 0 = ListEnd <$> f
+    go i = let b = go (i-1)
+           in  ListNode <$> pure i <*> b <*> b
+
+-- | The same as 'replicateA', but the actions are executed in reversed order.
+replicateAR :: Applicative f => Int -> f a -> f (BinList a)
+replicateAR n = forwards . replicateA n . Backwards
 
 -- | Fold a binary list using an operator.
 fold :: (a -> a -> a) -> BinList a -> a
