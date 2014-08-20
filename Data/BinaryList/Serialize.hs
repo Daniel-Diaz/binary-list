@@ -19,6 +19,8 @@ module Data.BinaryList.Serialize (
    , encodedFromByteString
    ) where
 
+import Prelude hiding (foldr,foldl)
+import Data.Foldable (foldr,foldl)
 -- Binary lists
 import Data.BinaryList.Internal
 import Data.BinaryList
@@ -69,8 +71,8 @@ data EncodedBinList =
 encodeBinList :: (a -> Put) -> Direction -> BinList a -> EncodedBinList
 encodeBinList f d xs = EncodedBinList d (lengthIndex xs) $
   if d == FromLeft
-     then runPut $ foldr (\x y -> f x >> y) (return ()) $ toList xs
-     else runPut $ foldl (\y x -> f x >> y) (return ()) $ toList xs
+     then runPut $ foldr (\x y -> f x >> y) (return ()) xs
+     else runPut $ foldl (\y x -> f x >> y) (return ()) xs
 
 -- | A binary list decoded, from where you can extract a binary list. If the
 --   decoding process fails in some point, you still will be able to retrieve

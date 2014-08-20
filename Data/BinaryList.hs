@@ -33,8 +33,6 @@ module Data.BinaryList (
   , lookup
   , head
   , last
-  , minimum
-  , maximum
     -- * Decontruction
   , split
   , fold
@@ -49,19 +47,18 @@ module Data.BinaryList (
     -- * Lists
   , fromList
   , fromListWithDefault
-  , toList
   ) where
 
-import Prelude hiding ( length,lookup,replicate,head,last,zip,unzip,zipWith,reverse
-                      , minimum, maximum
-                        )
+import Prelude hiding ( length,lookup,replicate,head,last,zip,unzip,zipWith,reverse,foldr1 )
 import qualified Prelude
 import Foreign.Storable (sizeOf)
 import Data.List (find)
 import Data.BinaryList.Internal
 import Control.Applicative (Applicative (..),(<$>))
 import Control.Applicative.Backwards
-
+import Data.Monoid (mappend)
+import Data.Foldable (Foldable (..),toList)
+import Data.Traversable (Traversable (..))
 
 -- | /O(1)/. Build a list with a single element.
 singleton :: a -> BinList a
@@ -113,7 +110,7 @@ replicate :: Int -> a -> BinList a
 replicate n x = go n
   where
     go 0 = ListEnd x
-    go i = let b = go (n-1) -- Both branches of the binary list
+    go i = let b = go (i-1) -- Both branches of the binary list
            in  ListNode i b b -- Note that both branches are the same shared object
 
 {-# RULES
@@ -144,11 +141,6 @@ replicateAR n = forwards . replicateA n . Backwards
          forall i f . fmap reverse (replicateAR i f) = replicateA  i f
   #-}
 
--- | Fold a binary list using an operator.
-fold :: (a -> a -> a) -> BinList a -> a
-fold f (ListNode _ l r) = f (fold f l) (fold f r)
-fold _ (ListEnd x) = x
-
 -- | /O(log n)/. Get the first element of a binary list.
 head :: BinList a -> a
 head (ListNode _ l _) = head l
@@ -168,16 +160,6 @@ reverse xs = xs
       "Data.BinaryList: reverse/reverse"
          forall xs. reverse (reverse xs) = xs
   #-}
-
--- | /O(n)/. Retrieves the minimum element of a binary list.
-minimum :: Ord a => BinList a -> a
-minimum (ListEnd x) = x
-minimum (ListNode _ l r) = min (minimum l) (minimum r)
-
--- | /O(n)/. Retrieves the maximum element of a binary list.
-maximum :: Ord a => BinList a -> a
-maximum (ListEnd x) = x
-maximum (ListNode _ l r) = max (maximum l) (maximum r)
 
 ------------------------------
 -- Transformations with tuples
@@ -303,13 +285,6 @@ fromListBuilderWithDefault e = go
              then ListNode n (go xs l m) (replicate m e)
              else ListNode n (fromListBuilder ys m) (go zs (l - l') m)
 
--- | /O(n)/. Build a linked list from a binary list.
-toList :: BinList a -> [a]
-toList = go []
-  where
-    go xs (ListNode _ l r) = go (go xs r) l
-    go xs (ListEnd x) = x : xs
-
 -----------------------------
 -- Show and Functor instances
 
@@ -319,3 +294,18 @@ instance Show a => Show (BinList a) where
 instance Functor BinList where
   fmap f (ListNode n l r) = ListNode n (fmap f l) (fmap f r)
   fmap f (ListEnd x) = ListEnd $ f x
+
+instance Foldable BinList where
+  -- Folding
+  foldr1 f = go
+    where
+      go (ListEnd x) = x
+      go (ListNode _ l r) = f (go l) (go r)
+  --
+  fold = foldr1 mappend
+  foldl1 = foldr1
+  foldMap f = fold . fmap f
+
+instance Traversable BinList where
+  sequenceA (ListEnd f) = ListEnd <$> f
+  sequenceA (ListNode n l r) = ListNode <$> pure n <*> sequenceA l <*> sequenceA r
