@@ -19,6 +19,7 @@ module Data.BinaryList.Serialize (
    , encodedFromByteString
    ) where
 
+import Prelude hiding (reverse)
 -- Binary lists
 import Data.BinaryList.Internal
 import Data.BinaryList
@@ -118,6 +119,19 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
     Left (r,_,err) -> DecodingError err r
     Right (r,_,x) -> go r (ListEnd x)
   where
+    -- | To avoid looking at the direction in each recursive step,
+    --   we provide a function to append newly read data with the
+    --   accumulated binary list depending on the direction. Since the
+    --   new data is of the same size as the accumulated binary list,
+    --   we can append them safely just by using 'ListNode'.
+    --
+    -- recAppend :: Int -> BinList a -> BinList a -> BinList a
+    recAppend i = case d of
+       FromLeft    -> ListNode (i+1)
+       _ -> \xs ys -> ListNode (i+1) (reverse ys) xs
+
+    -- | Recursive decoding function.
+    --
     -- go :: ByteString -- ^ Input data.
     --    -> BinList a -- ^ Accumulated binary list.
     --    -> Decoded a
@@ -130,20 +144,15 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
               -- the already decoded data, prepending the accumulated data as
               -- a partial result.
               else PartialResult xs $ case runGetOrFail (replicateM (2^i) f) input of
-                     -- In case of error, we return the accumulated result
-                     -- followed by a decoding error.
+                     -- In case of error, we return a decoding error.
                      Left (r,_,err) -> DecodingError err r
                      Right (r,_,list) ->
-                       let -- Binary list of new data
+                       let -- Otherwise, we build a new binary list with the collected
+                           -- new data.
                            ys = fromListBuilder list i
-                           -- Since the new data is of the same size of the accumulated
-                           -- binary list, we can append safely just using 'ListNode'.
-                           -- The appending order is determined by the encoding direction.
-                           zs = if d == FromLeft
-                                   then ListNode (i+1) xs ys
-                                   else ListNode (i+1) ys xs
-                           -- The new list is fed to the next recursion step.
-                       in  go r zs
+                           -- The new list is appended with the accumulated list and fed
+                           -- to the next recursion step.
+                       in  go r $ recAppend i xs ys
 
 -- | Translate an encoded binary list to a bytestring.
 encodedToByteString :: EncodedBinList -> ByteString

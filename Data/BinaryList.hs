@@ -264,6 +264,7 @@ fromListBuilderWithDefault :: a -- ^ Default element
 fromListBuilderWithDefault e = go
   where
     go [] _ n = replicate n e
+    go xs _ 0 = ListEnd $ Prelude.head xs -- Hopefully we can avoid this case?
     go xs l n =
       let m = n - 1
           l' = 2^m
