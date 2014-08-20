@@ -71,8 +71,8 @@ data EncodedBinList =
 encodeBinList :: (a -> Put) -> Direction -> BinList a -> EncodedBinList
 encodeBinList f d xs = EncodedBinList d (lengthIndex xs) $
   if d == FromLeft
-     then runPut $ foldl (\y x -> y >> f x) (return ()) $ toList xs
-     else runPut $ foldr (\x y -> f x >> y) (return ()) $ toList xs
+     then runPut $ foldr (\x y -> f x >> y) (return ()) $ toList xs
+     else runPut $ foldl (\y x -> f x >> y) (return ()) $ toList xs
 
 -- | A binary list decoded, from where you can extract a binary list. If the
 --   decoding process fails in some point, you still will be able to retrieve
