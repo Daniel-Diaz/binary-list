@@ -116,7 +116,7 @@ replicate n x = go n
 
 {-# RULES
       "Data.BinaryList: fmap/replicate"
-         forall f n x. fmap f (replicate n x) = replicate n (f x)
+         forall f n x . fmap f (replicate n x) = replicate n (f x)
   #-}
 
 -- | Calling @replicateA n f@ builds a binary list collecting the results of
@@ -131,6 +131,16 @@ replicateA n f = go n
 -- | The same as 'replicateA', but the actions are executed in reversed order.
 replicateAR :: Applicative f => Int -> f a -> f (BinList a)
 replicateAR n = forwards . replicateA n . Backwards
+
+{-# RULES
+      "Data.BinaryList: fmap reverse/replicateA"
+         forall i f . fmap reverse (replicateA  i f) = replicateAR i f
+  #-}
+
+{-# RULES
+      "Data.BinaryList: fmap reverse/replicateAR"
+         forall i f . fmap reverse (replicateAR i f) = replicateA  i f
+  #-}
 
 -- | Fold a binary list using an operator.
 fold :: (a -> a -> a) -> BinList a -> a
