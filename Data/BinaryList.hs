@@ -3,7 +3,9 @@
 --   This data structure is efficient for some computations like:
 --
 -- * Splitting a list in half.
+--
 -- * Appending two lists of the same length.
+--
 -- * Extracting an element from the list.
 --
 --   All the functions exported are total except for 'fromListWithDefault'.
@@ -120,7 +122,7 @@ replicate n x = go n
   #-}
 
 -- | Calling @replicateA n f@ builds a binary list collecting the results of
---   executing the applicative action @f@ @2^n@ times.
+--   executing @2^n@ times the applicative action @f@.
 replicateA :: Applicative f => Int -> f a -> f (BinList a)
 replicateA n f = go n
   where
