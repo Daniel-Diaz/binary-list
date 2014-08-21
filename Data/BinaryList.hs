@@ -112,12 +112,12 @@ split (ListEnd x) = Left x
 
 -- | /O(log n)/. Calling @take n xs@ returns the first @min (2^n) (length xs)@ elements of @xs@.
 take :: Int -> BinList a -> BinList a
-take k xs@(ListNode n l _) = if k >= n then xs else take (k-1) l
+take k xs@(ListNode n l _) = if k >= n then xs else take k l
 take _ xs = xs
 
 -- | /O(log n)/. Calling @takeEnd n xs@ returns the last @min (2^n) (length xs)@ elements of @xs@.
 takeEnd :: Int -> BinList a -> BinList a
-takeEnd k xs@(ListNode n _ r) = if k >= n then xs else takeEnd (k-1) r
+takeEnd k xs@(ListNode n _ r) = if k >= n then xs else takeEnd k r
 takeEnd _ xs = xs
 
 -- | /O(log n)/. Calling @replicate n x@ builds a binary list with
