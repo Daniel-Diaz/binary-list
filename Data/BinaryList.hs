@@ -60,6 +60,7 @@ import Data.List (find)
 import Data.BinaryList.Internal
 import Control.Applicative (Applicative (..),(<$>))
 import Control.Applicative.Backwards
+import Control.Arrow ((***))
 import Data.Monoid (mappend)
 import Data.Foldable (Foldable (..),toList)
 import Data.Traversable (Traversable (..))
@@ -187,6 +188,27 @@ disjoinPairsNodes :: BinList a -> BinList (a,a)
 disjoinPairsNodes (ListNode _ (ListEnd x) (ListEnd y)) = ListEnd (x,y)
 disjoinPairsNodes (ListNode n l r) = ListNode (n-1) (disjoinPairsNodes l) (disjoinPairsNodes r)
 disjoinPairsNodes _ = error "disjoinPairsNodes: bug. Please, report this with an example input."
+
+{-# RULES
+      "Data.BinaryList: disjoinPairs/joinPairs"
+         forall xs . disjoinPairs (joinPairs xs) = Just xs
+  #-}
+
+{-# RULES
+      "Data.BinaryList: disjoinPairs/fmap/joinPairs"
+         forall f xs . disjoinPairs (fmap f (joinPairs xs)) = Just (fmap (f *** f) xs)
+  #-}
+
+pairBuilder :: (a -> (b,b)) -> BinList a -> BinList b
+pairBuilder f = go
+  where
+    go (ListEnd x) = let (a,b) = f x in ListNode 1 (ListEnd a) (ListEnd b)
+    go (ListNode n l r) = ListNode (n+1) (go l) (go r)
+
+{-# RULES
+      "Data.BinaryList: joinPairs/fmap"
+         forall f xs . joinPairs (fmap f xs) = pairBuilder f xs
+  #-}
 
 ------------------------
 -- Zipping and Unzipping
