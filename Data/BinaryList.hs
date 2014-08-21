@@ -39,7 +39,8 @@ module Data.BinaryList (
   , last
     -- * Decontruction
   , split
-  , fold
+  , take
+  , takeEnd
     -- * Transformation
   , reverse
     -- * Tuples
@@ -53,7 +54,7 @@ module Data.BinaryList (
   , fromListWithDefault
   ) where
 
-import Prelude hiding ( length,lookup,replicate,head,last,zip,unzip,zipWith,reverse,foldr1 )
+import Prelude hiding ( length,lookup,replicate,head,last,zip,unzip,zipWith,reverse,foldr1,take )
 import qualified Prelude
 import Foreign.Storable (sizeOf)
 import Data.List (find)
@@ -108,6 +109,16 @@ append xs ys =
 split :: BinList a -> Either a (BinList a,BinList a)
 split (ListNode _ l r) = Right (l,r)
 split (ListEnd x) = Left x
+
+-- | /O(log n)/. Calling @take n xs@ returns the first @min (2^n) (length xs)@ elements of @xs@.
+take :: Int -> BinList a -> BinList a
+take k xs@(ListNode n l _) = if k >= n then xs else take (k-1) l
+take _ xs = xs
+
+-- | /O(log n)/. Calling @takeEnd n xs@ returns the last @min (2^n) (length xs)@ elements of @xs@.
+takeEnd :: Int -> BinList a -> BinList a
+takeEnd k xs@(ListNode n _ r) = if k >= n then xs else takeEnd (k-1) r
+takeEnd _ xs = xs
 
 -- | /O(log n)/. Calling @replicate n x@ builds a binary list with
 --   @2^n@ occurences of @x@.
