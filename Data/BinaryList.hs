@@ -12,7 +12,7 @@
 --   It is impossible for the user of this library to create a binary list
 --   whose length is /not/ a power of two.
 --
---   Since many names in this module crashes with the names of some "Prelude"
+--   Since many names in this module clashes with the names of some "Prelude"
 --   functions, you probably want to import this module this way:
 --
 -- > import Data.BinaryList (BinList)
