@@ -46,7 +46,7 @@ module Data.BinaryList (
   , lookup
   , head
   , last
-    -- * Decontruction
+    -- * Deconstruction
   , split
   , take
   , takeEnd
