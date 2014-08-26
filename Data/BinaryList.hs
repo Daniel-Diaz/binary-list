@@ -74,7 +74,7 @@ import Control.Arrow ((***))
 import Data.Monoid (mappend)
 import Data.Foldable (Foldable (..),toList)
 import Data.Traversable (Traversable (..))
-import Control.Monad.Trans.State.Strict (evalState,get,modify)
+import Control.Monad.Trans.State (evalState,get,modify)
 
 -- | /O(1)/. Build a list with a single element.
 singleton :: a -> BinList a
