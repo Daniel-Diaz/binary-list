@@ -94,7 +94,7 @@ length = (2^) . lengthIndex
 
 {-# RULES
        "Data.BinaryList: length equality"
-         forall xs ys . length xs == length ys = lengthIndex xs == lengthIndex xs
+         forall xs ys . length xs == length ys = lengthIndex xs == lengthIndex ys
   #-}
 
 -- | /O(log n)/. Lookup an element in the list by its index (starting from 0).
