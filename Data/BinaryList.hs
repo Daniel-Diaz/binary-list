@@ -22,6 +22,14 @@
 --   classes. If you are missing a function here, look for functions using those
 --   instances.
 --
+--   Note that some functions like 'replicate', 'generate', or 'take', don't use
+--   the length of the list as argument, but the exponent of its length expressed
+--   as a power of two. Throughout this document, this is referred (perhaps improperly)
+--   as the /length index/. For example, if the list has length 16, its length index
+--   is 4 since 2^4 = 16. Therefore @replicate 4 0@ will create a list with 16 zeroes.
+--   Keep this in mind when using this library. Note as well that this implies that
+--   there is no need to check that the length argument is or is not a power of two.
+--
 module Data.BinaryList (
     -- * Type
     BinList
