@@ -2,7 +2,7 @@ name:                binary-list
 version:             0.3.0.0
 synopsis:            Lists of size length a power of two.
 description:         Some algorithmic problems work only when the input list
-                     has length a power of two. This library provides with a
+                     has length a power of two. This library implements a
                      data structure optimized for this.
 license:             BSD3
 license-file:        LICENSE
