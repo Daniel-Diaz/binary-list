@@ -200,6 +200,8 @@ reverse xs = xs
 ------------------------------
 -- Transformations with tuples
 
+{-# INLINE[1] joinPairs #-}
+
 -- | /O(n)/. Transform a list of pairs into a flat list. The
 --   resulting list will have twice more elements than the
 --   original.
@@ -229,6 +231,8 @@ disjoinPairsNodes _ = error "disjoinPairsNodes: bug. Please, report this with an
       "Data.BinaryList: disjoinPairs/fmap/joinPairs"
          forall f xs . disjoinPairs (fmap f (joinPairs xs)) = Just (fmap (f *** f) xs)
   #-}
+
+{-# INLINE[1] pairBuilder #-}
 
 pairBuilder :: (a -> (b,b)) -> BinList a -> BinList b
 pairBuilder f = go
@@ -295,6 +299,8 @@ zipWith f = go
 -- | /O(n)/. Zip two binary lists in pairs.
 zip :: BinList a -> BinList b -> BinList (a,b)
 zip = zipWith (,)
+
+{-# INLINE[1] unzip #-}
 
 -- | /O(n)/. Unzip a binary list of pairs.
 unzip :: BinList (a,b) -> (BinList a, BinList b)
