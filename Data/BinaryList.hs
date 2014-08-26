@@ -31,6 +31,7 @@ module Data.BinaryList (
   , replicate
   , replicateA
   , replicateAR
+  , generate
     -- * Queries
   , lengthIndex
   , length
@@ -65,6 +66,7 @@ import Control.Arrow ((***))
 import Data.Monoid (mappend)
 import Data.Foldable (Foldable (..),toList)
 import Data.Traversable (Traversable (..))
+import Control.Monad.Trans.State.Strict (evalState,get,modify)
 
 -- | /O(1)/. Build a list with a single element.
 singleton :: a -> BinList a
@@ -161,6 +163,11 @@ replicateAR n = forwards . replicateA n . Backwards
       "Data.BinaryList: fmap reverse/replicateAR"
          forall i f . fmap reverse (replicateAR i f) = replicateA  i f
   #-}
+
+-- | /O(n)/. Build a binary list with the given length index (see 'lengthIndex')
+--   by applying a function to each index.
+generate :: Int -> (Int -> a) -> BinList a
+generate l f = evalState (replicateA l $ fmap f get <* modify (+1)) 0
 
 -- | /O(log n)/. Get the first element of a binary list.
 head :: BinList a -> a
