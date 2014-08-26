@@ -82,6 +82,11 @@ lengthIndex (ListEnd _) = 0
 length :: BinList a -> Int
 length = (2^) . lengthIndex
 
+{-# RULES
+       "Data.BinaryList: length equality"
+         forall xs ys . length xs == length ys = lengthIndex xs == lengthIndex xs
+  #-}
+
 -- | /O(log n)/. Lookup an element in the list by its index (starting from 0).
 --   If the index is out of range, 'Nothing' is returned.
 lookup :: BinList a -> Int -> Maybe a
