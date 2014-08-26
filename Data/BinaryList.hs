@@ -241,6 +241,33 @@ pairBuilder f = go
          forall f xs . joinPairs (fmap f xs) = pairBuilder f xs
   #-}
 
+zipAndJoin :: ((a,b) -> (c,c)) -> BinList a -> BinList b -> BinList c
+zipAndJoin f = go
+  where
+    -- Recursion
+    go xs@(ListNode n l r) ys@(ListNode n' l' r')
+         -- If both lists have the same length, recurse assuming it
+         -- to avoid comparisons.
+       | n == n'   = ListNode (n+1) (goEquals l l') (goEquals r r')
+         -- If the first list is larger, the second fits entirely in
+         -- the left branch of the first.
+       | n >  n'   = go l ys
+         -- If the second list is larger, the first fits entirely in
+         -- the left branch of the second.
+       | otherwise = go xs l'
+    go xs ys       = let (x,y) = f (head xs,head ys)
+                     in  ListNode 1 (ListEnd x) (ListEnd y)
+    -- Recursion assuming both lists have the same length
+    goEquals (ListNode n l r) (ListNode _ l' r') =
+                     ListNode (n+1) (goEquals l l') (goEquals r r')
+    goEquals xs ys = let (x,y) = f (head xs,head ys)
+                     in  ListNode 1 (ListEnd x) (ListEnd y)
+
+{-# RULES
+      "Data.BinaryList: pairBuilder/zip"
+         forall f xs ys . pairBuilder f (zip xs ys) = zipAndJoin f xs ys
+  #-}
+
 ------------------------
 -- Zipping and Unzipping
 
