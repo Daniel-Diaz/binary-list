@@ -277,6 +277,20 @@ unzip (ListNode n l r) =
       (ra,rb) = unzip r
   in  (ListNode n la ra, ListNode n lb rb)
 
+unzipMap :: ((a,b) -> (c,d)) -> BinList (a,b) -> (BinList c,BinList d)
+unzipMap f = go
+  where
+    go (ListEnd p) = ListEnd *** ListEnd $ f p
+    go (ListNode n l r) =
+      let (lc,ld) = go l
+          (rc,rd) = go r
+      in  (ListNode n lc rc, ListNode n ld rd)
+
+{-# RULES
+      "Data.BinaryList: unzip/fmap"
+         forall f xs . unzip (fmap f xs) = unzipMap f xs
+  #-}
+
 -----------------------------
 -- Transforming from/to lists
 
