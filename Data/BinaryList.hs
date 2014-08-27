@@ -63,7 +63,7 @@ module Data.BinaryList (
   , fromListWithDefault
   ) where
 
-import Prelude hiding ( length,lookup,replicate,head,last,zip,unzip,zipWith,reverse,foldr1,take )
+import Prelude hiding ( length,lookup,replicate,head,last,zip,unzip,zipWith,reverse,foldr1,take,map )
 import qualified Prelude
 import Foreign.Storable (sizeOf)
 import Data.List (find)
@@ -145,8 +145,8 @@ replicate n x = go n
            in  ListNode i b b -- Note that both branches are the same shared object
 
 {-# RULES
-      "Data.BinaryList: fmap/replicate"
-         forall f n x . fmap f (replicate n x) = replicate n (f x)
+      "Data.BinaryList: map/replicate"
+         forall f n x . map f (replicate n x) = replicate n (f x)
   #-}
 
 -- | Calling @replicateA n f@ builds a binary list collecting the results of
@@ -163,13 +163,13 @@ replicateAR :: Applicative f => Int -> f a -> f (BinList a)
 replicateAR n = forwards . replicateA n . Backwards
 
 {-# RULES
-      "Data.BinaryList: fmap reverse/replicateA"
-         forall i f . fmap reverse (replicateA  i f) = replicateAR i f
+      "Data.BinaryList: map reverse/replicateA"
+         forall i f . map reverse (replicateA  i f) = replicateAR i f
   #-}
 
 {-# RULES
-      "Data.BinaryList: fmap reverse/replicateAR"
-         forall i f . fmap reverse (replicateAR i f) = replicateA  i f
+      "Data.BinaryList: map reverse/replicateAR"
+         forall i f . map reverse (replicateAR i f) = replicateA  i f
   #-}
 
 -- | /O(n)/. Build a binary list with the given length index (see 'lengthIndex')
@@ -228,12 +228,14 @@ disjoinPairsNodes _ = error "disjoinPairsNodes: bug. Please, report this with an
   #-}
 
 {-# RULES
-      "Data.BinaryList: disjoinPairs/fmap/joinPairs"
-         forall f xs . disjoinPairs (fmap f (joinPairs xs)) = Just (fmap (f *** f) xs)
+      "Data.BinaryList: disjoinPairs/map/joinPairs"
+         forall f xs . disjoinPairs (map f (joinPairs xs)) = Just (map (f *** f) xs)
   #-}
 
-{-# INLINE[1] pairBuilder #-}
+{-# INLINE[0] pairBuilder #-}
 
+-- | Expression @pairBuilder f xs@ is equivalent to @joinPairs (map f xs)@, but does
+--   not build any intermediate structure. Used for rewriting rules.
 pairBuilder :: (a -> (b,b)) -> BinList a -> BinList b
 pairBuilder f = go
   where
@@ -241,12 +243,14 @@ pairBuilder f = go
     go (ListNode n l r) = ListNode (n+1) (go l) (go r)
 
 {-# RULES
-      "Data.BinaryList: joinPairs/fmap"
-         forall f xs . joinPairs (fmap f xs) = pairBuilder f xs
+      "Data.BinaryList: joinPairs/map"
+         forall f xs . joinPairs (map f xs) = pairBuilder f xs
   #-}
 
-zipAndJoin :: ((a,b) -> (c,c)) -> BinList a -> BinList b -> BinList c
-zipAndJoin f = go
+-- | Expression @zipAndJoing f g xs ys@ is equivalent to @pairBuilder f (zipWith g xs ys)@,
+--   but does not build any intermediate structure. Used for rewriting rules.
+zipAndJoin :: (c -> (d,d)) -> (a -> b -> c) -> BinList a -> BinList b -> BinList d
+zipAndJoin f g = go
   where
     -- Recursion
     go xs@(ListNode n l r) ys@(ListNode n' l' r')
@@ -259,17 +263,17 @@ zipAndJoin f = go
          -- If the second list is larger, the first fits entirely in
          -- the left branch of the second.
        | otherwise = go xs l'
-    go xs ys       = let (x,y) = f (head xs,head ys)
+    go xs ys       = let (x,y) = f $ g (head xs) (head ys)
                      in  ListNode 1 (ListEnd x) (ListEnd y)
     -- Recursion assuming both lists have the same length
     goEquals (ListNode n l r) (ListNode _ l' r') =
                      ListNode (n+1) (goEquals l l') (goEquals r r')
-    goEquals xs ys = let (x,y) = f (head xs,head ys)
+    goEquals xs ys = let (x,y) = f $ g (head xs) (head ys)
                      in  ListNode 1 (ListEnd x) (ListEnd y)
 
 {-# RULES
-      "Data.BinaryList: pairBuilder/zip"
-         forall f xs ys . pairBuilder f (zip xs ys) = zipAndJoin f xs ys
+      "Data.BinaryList: pairBuilder/zipWith"
+         forall f g xs ys . pairBuilder f (zipWith g xs ys) = zipAndJoin f g xs ys
   #-}
 
 ------------------------
@@ -296,6 +300,8 @@ zipWith f = go
                      ListNode n (goEquals l l') (goEquals r r')
     goEquals xs ys = ListEnd $ f (head xs) (head ys)
 
+{-# INLINE zip #-}
+
 -- | /O(n)/. Zip two binary lists in pairs.
 zip :: BinList a -> BinList b -> BinList (a,b)
 zip = zipWith (,)
@@ -310,6 +316,8 @@ unzip (ListNode n l r) =
       (ra,rb) = unzip r
   in  (ListNode n la ra, ListNode n lb rb)
 
+-- | Expression @unzipMap f xs@ is equivalent to @unzip (map f xs)@, but
+--   does not create any intermediate structure.
 unzipMap :: ((a,b) -> (c,d)) -> BinList (a,b) -> (BinList c,BinList d)
 unzipMap f = go
   where
@@ -320,8 +328,8 @@ unzipMap f = go
       in  (ListNode n lc rc, ListNode n ld rd)
 
 {-# RULES
-      "Data.BinaryList: unzip/fmap"
-         forall f xs . unzip (fmap f xs) = unzipMap f xs
+      "Data.BinaryList: unzip/map"
+         forall f xs . unzip (map f xs) = unzipMap f xs
   #-}
 
 -----------------------------
@@ -395,9 +403,24 @@ fromListBuilderWithDefault e = go
 instance Show a => Show (BinList a) where
   show = show . toList
 
+{- Internal map
+
+Although we encourage the use of 'fmap', we define fmap as a custom 'map'
+function and inline 'fmap' to make them equivalent, so writing 'fmap' is
+actually writing 'map'. We do this to use 'map' in rewriting rules.
+
+-}
+
+{-# INLINE[1] map #-}
+map :: (a -> b) -> BinList a -> BinList b
+map f = go
+  where
+    go (ListEnd x) = ListEnd (f x)
+    go (ListNode n l r) = ListNode n (go l) (go r)
+
 instance Functor BinList where
-  fmap f (ListNode n l r) = ListNode n (fmap f l) (fmap f r)
-  fmap f (ListEnd x) = ListEnd $ f x
+  {-# INLINE fmap #-}
+  fmap = map
 
 instance Foldable BinList where
   -- Folding
