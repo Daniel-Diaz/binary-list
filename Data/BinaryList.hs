@@ -187,6 +187,8 @@ last :: BinList a -> a
 last (ListNode _ _ r) = last r
 last (ListEnd x) = x
 
+{-# INLINE[2] reverse #-}
+
 -- | /O(n)/. Reverse a binary list.
 reverse :: BinList a -> BinList a
 reverse (ListNode n l r) = ListNode n (reverse r) (reverse l)
@@ -208,6 +210,8 @@ reverse xs = xs
 joinPairs :: BinList (a,a) -> BinList a
 joinPairs (ListEnd (x,y)) = ListNode 1 (ListEnd x) (ListEnd y)
 joinPairs (ListNode n l r) = ListNode (n+1) (joinPairs l) (joinPairs r)
+
+{-# INLINE [1] disjoinPairs #-}
 
 -- | /O(n)/. Opposite transformation of 'joinPairs'. It halves
 --   the number of elements of the input. As a result, when
