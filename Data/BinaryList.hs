@@ -379,7 +379,6 @@ fromListWithDefault :: a -> [a] -> BinList a
 fromListWithDefault e xs =
   let l = Prelude.length xs
   in  case nextExponentOfTwo l of
-        -- Just n -> fromListBuilderWithDefault e xs l n
         Just n ->
           evalState (replicateA n $ StateT $
              \ys -> pure $ case ys of
