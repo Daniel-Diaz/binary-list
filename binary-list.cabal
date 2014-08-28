@@ -25,3 +25,12 @@ Source-repository head
   type: git
   location: git://github.com/Daniel-Diaz/binary-list.git
 
+benchmark binary-list-bench
+  type: exitcode-stdio-1.0
+  hs-source-dirs: bench
+  main-is: Main.hs
+  build-depends: base == 4.*
+               , binary-list
+               , deepseq
+               , criterion
+  ghc-options: -O2

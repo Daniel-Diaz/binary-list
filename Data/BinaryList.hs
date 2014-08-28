@@ -74,7 +74,7 @@ import Control.Arrow ((***))
 import Data.Monoid (mappend)
 import Data.Foldable (Foldable (..),toList)
 import Data.Traversable (Traversable (..))
-import Control.Monad.Trans.State (evalState,get,modify)
+import Control.Monad.Trans.State (StateT (..),evalState,get,modify)
 
 -- | /O(1)/. Build a list with a single element.
 singleton :: a -> BinList a
@@ -351,7 +351,9 @@ exponentInBasisTwo n =
 -- | /O(n)/. Build a binary list from a linked list. If the input list
 --   has length different from a power of two, it returns 'Nothing'.
 fromList :: [a] -> Maybe (BinList a)
-fromList xs = fmap (fromListBuilder xs) $ exponentInBasisTwo $ Prelude.length xs
+fromList xs = fmap builder . exponentInBasisTwo $ Prelude.length xs
+  where
+    builder l = evalState (replicateA l $ StateT $ \(h:t) -> pure (h,t)) xs
 
 -- | /O(1)/. This is the last exponent that has power of two defined in the type 'Int'.
 --
@@ -377,29 +379,14 @@ fromListWithDefault :: a -> [a] -> BinList a
 fromListWithDefault e xs =
   let l = Prelude.length xs
   in  case nextExponentOfTwo l of
-        Just n -> fromListBuilderWithDefault e xs l n
+        -- Just n -> fromListBuilderWithDefault e xs l n
+        Just n ->
+          evalState (replicateA n $ StateT $
+             \ys -> pure $ case ys of
+                      (h:t) -> (h,t)
+                      [] -> (e,[])
+               ) xs
         _ -> error "fromListWithDefault: input list is too big."
-
--- | /O(n)/. Build a binary list from any linked list, providing a default element
---   to use when in need of completing elements to the next power of two,
---   and the length index of the output binary list.
-fromListBuilderWithDefault :: a -- ^ Default element
-                           -> [a] -- ^ Input list
-                           -> Int -- ^ Lenght of the input list
-                           -> Int -- ^ Length index of the list expanded
-                                  --   to the next power of two
-                           -> BinList a
-fromListBuilderWithDefault e = go
-  where
-    go [] _ n = replicate n e
-    go xs _ 0 = ListEnd $ Prelude.head xs -- Hopefully we can avoid this case?
-    go xs l n =
-      let m = n - 1
-          l' = 2^m
-          (ys,zs) = splitAt l' xs
-      in  if l <= l'
-             then ListNode n (go xs l m) (replicate m e)
-             else ListNode n (fromListBuilder ys m) (go zs (l - l') m)
 
 -----------------------------
 -- Show and Functor instances
