@@ -75,6 +75,7 @@ import Data.Monoid (mappend)
 import Data.Foldable (Foldable (..),toList)
 import Data.Traversable (Traversable (..))
 import Control.Monad.Trans.State (StateT (..),evalState,get,modify)
+import Data.Functor.Identity (Identity (..))
 
 -- | /O(1)/. Build a list with a single element.
 singleton :: a -> BinList a
@@ -135,20 +136,6 @@ takeEnd :: Int -> BinList a -> BinList a
 takeEnd k xs@(ListNode n _ r) = if k >= n then xs else takeEnd k r
 takeEnd _ xs = xs
 
--- | /O(log n)/. Calling @replicate n x@ builds a binary list with
---   @2^n@ occurences of @x@.
-replicate :: Int -> a -> BinList a
-replicate n x = go n
-  where
-    go 0 = ListEnd x
-    go i = let b = go (i-1) -- Both branches of the binary list
-           in  ListNode i b b -- Note that both branches are the same shared object
-
-{-# RULES
-      "Data.BinaryList: map/replicate"
-         forall f n x . map f (replicate n x) = replicate n (f x)
-  #-}
-
 -- | Calling @replicateA n f@ builds a binary list collecting the results of
 --   executing @2^n@ times the applicative action @f@.
 replicateA :: Applicative f => Int -> f a -> f (BinList a)
@@ -170,6 +157,16 @@ replicateAR n = forwards . replicateA n . Backwards
 {-# RULES
       "Data.BinaryList: map reverse/replicateAR"
          forall i f . map reverse (replicateAR i f) = replicateA  i f
+  #-}
+
+-- | /O(log n)/. Calling @replicate n x@ builds a binary list with
+--   @2^n@ occurences of @x@.
+replicate :: Int -> a -> BinList a
+replicate n = runIdentity . replicateA n . Identity
+
+{-# RULES
+      "Data.BinaryList: map/replicate"
+         forall f n x . map f (replicate n x) = replicate n (f x)
   #-}
 
 -- | /O(n)/. Build a binary list with the given length index (see 'lengthIndex')
