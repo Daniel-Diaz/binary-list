@@ -13,6 +13,7 @@ module Data.BinaryList.Serialize (
    , DecodedBinList (..)
    , Decoded (..)
    , fromDecoded
+   , mapDecoded
    , decodeBinList
      -- ** ByteString translations
    , encodedToByteString
@@ -108,6 +109,14 @@ fromDecoded :: Decoded a -> Either String (BinList a)
 fromDecoded (PartialResult _ d) = fromDecoded d
 fromDecoded (FinalResult xs _) = Right xs
 fromDecoded (DecodingError err _) = Left err
+
+-- | Map a function on binary lists to a 'Decoded' value.
+mapDecoded :: (BinList a -> BinList b) -> Decoded a -> Decoded b
+mapDecoded f = go
+  where
+    go (PartialResult xs d) = PartialResult (f xs) (go d)
+    go (FinalResult xs r) = FinalResult (f xs) r
+    go (DecodingError err r) = DecodingError err r
 
 -- | Decode an encoded binary list.
 --   The result is given as a 'DecodedBinList' value, which can then be
