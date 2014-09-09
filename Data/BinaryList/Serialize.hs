@@ -13,6 +13,7 @@ module Data.BinaryList.Serialize (
    , DecodedBinList (..)
    , Decoded (..)
    , fromDecoded
+   , toDecoded
    , mapDecoded
    , decodeBinList
      -- ** ByteString translations
@@ -30,7 +31,7 @@ import Data.Binary (Binary (..))
 import Data.Binary.Put
 import Data.Binary.Get
 -- Bytestrings
-import Data.ByteString.Lazy (ByteString)
+import Data.ByteString.Lazy (ByteString,empty)
 
 -- | Encode a binary list using the 'Binary' instance of
 --   its elements.
@@ -109,6 +110,20 @@ fromDecoded :: Decoded a -> Either String (BinList a)
 fromDecoded (PartialResult _ d) = fromDecoded d
 fromDecoded (FinalResult xs _) = Right xs
 fromDecoded (DecodingError err _) = Left err
+
+-- | Break a list down to sublists of order 1, 2, 4, 8, ..., 2^k.
+--   The result is stored in a 'Decoded' value. No decoding errors
+--   are possible here.
+toDecoded :: BinList a -> Decoded a
+toDecoded xs =
+  case split xs of
+    Right (l,_) -> go l $ FinalResult xs empty
+    _ -> FinalResult xs empty
+  where
+    go ys d =
+      case split ys of
+        Right (l,_) -> go l $ PartialResult ys d
+        _ -> PartialResult ys d
 
 -- | Map a function on binary lists to a 'Decoded' value.
 mapDecoded :: (BinList a -> BinList b) -> Decoded a -> Decoded b
