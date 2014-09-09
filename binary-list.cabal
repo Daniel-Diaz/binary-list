@@ -1,5 +1,5 @@
 name:                binary-list
-version:             0.3.1.2
+version:             0.3.2.0
 synopsis:            Lists of size length a power of two.
 description:         Some algorithmic problems work only when the input list
                      has length a power of two. This library implements a
