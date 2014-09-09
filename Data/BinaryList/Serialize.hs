@@ -21,8 +21,7 @@ module Data.BinaryList.Serialize (
    , encodedFromByteString
    ) where
 
-import Prelude hiding (foldr,foldl)
-import Data.Foldable (foldr,foldl)
+import Data.Foldable (traverse_)
 -- Binary lists
 import Data.BinaryList.Internal
 import Data.BinaryList
@@ -32,6 +31,8 @@ import Data.Binary.Put
 import Data.Binary.Get
 -- Bytestrings
 import Data.ByteString.Lazy (ByteString,empty)
+-- Backwards Applicative
+import Control.Applicative.Backwards
 
 -- | Encode a binary list using the 'Binary' instance of
 --   its elements.
@@ -73,8 +74,8 @@ data EncodedBinList =
 encodeBinList :: (a -> Put) -> Direction -> BinList a -> EncodedBinList
 encodeBinList f d xs = EncodedBinList d (lengthIndex xs) $
   if d == FromLeft
-     then runPut $ foldr (\x y -> f x >> y) (return ()) xs
-     else runPut $ foldl (\y x -> f x >> y) (return ()) xs
+     then runPut $ traverse_ f xs
+     else runPut $ forwards $ traverse_ (Backwards . f) xs
 
 -- | A binary list decoded, from where you can extract a binary list. If the
 --   decoding process fails in some point, you still will be able to retrieve
@@ -112,8 +113,8 @@ fromDecoded (FinalResult xs _) = Right xs
 fromDecoded (DecodingError err _) = Left err
 
 -- | Break a list down to sublists of order 1, 2, 4, 8, ..., 2^k.
---   The result is stored in a 'Decoded' value. No decoding errors
---   are possible here.
+--   The result is stored in a 'Decoded' value. Obviously, the output
+--   will not have a decoding error.
 toDecoded :: BinList a -> Decoded a
 toDecoded xs =
   case split xs of
