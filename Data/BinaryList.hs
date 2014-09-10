@@ -61,6 +61,8 @@ module Data.BinaryList (
     -- * Lists
   , fromList
   , fromListWithDefault
+    -- * Example: Radix-2 FFT
+    -- $fft
   ) where
 
 import Prelude hiding ( length,lookup,replicate,head,last,zip,unzip,zipWith,reverse,foldr1,take,map )
@@ -423,3 +425,39 @@ instance Foldable BinList where
 instance Traversable BinList where
   sequenceA (ListEnd f) = ListEnd <$> f
   sequenceA (ListNode n l r) = ListNode <$> pure n <*> sequenceA l <*> sequenceA r
+
+-----------------------------
+-- Example: Radix-2 FFT
+
+{- $fft
+
+This is an example demonstrating the use of binary lists to calculate the Discrete
+Fourier Transform of complex vectors with the Radix-2 Fast Fourier Transform algorithm.
+
+> import Data.BinaryList (BinList)
+> import qualified Data.BinaryList as BL
+> 
+> import Data.Complex
+> import Data.Maybe (fromJust)
+> 
+> i :: Complex Double
+> i = 0 :+ 1
+> 
+> fft :: BinList (Complex Double) -> BinList (Complex Double)
+> fft xs =
+>   case BL.disjoinPairs xs of
+>     Nothing -> xs
+>     Just ps ->
+>       let (evens,odds) = BL.unzip ps
+>           n = BL.lengthIndex xs - 1
+>           q = negate $ pi * i / fromIntegral (2^n)
+>           twiddles = BL.generate n $ \k -> exp $ q * fromIntegral k
+>           oddsfft = BL.zipWith (*) twiddles $ fft odds
+>           evensfft = fft evens
+>       in  fromJust $
+>             BL.append (BL.zipWith (+) evensfft oddsfft)
+>                       (BL.zipWith (-) evensfft oddsfft)
+
+
+
+-}
