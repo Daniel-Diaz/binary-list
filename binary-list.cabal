@@ -1,9 +1,21 @@
 name:                binary-list
-version:             0.3.2.0
+version:             0.3.2.1
 synopsis:            Lists of size length a power of two.
-description:         Some algorithmic problems work only when the input list
-                     has length a power of two. This library implements a
-                     data structure optimized for this.
+description:         Implementation of lists whose number of elements is a
+                     power of two. Binary lists have this property by definition,
+                     so it is impossible to build a value with other kind of length.
+                     The implementation take advantage of this property to get
+                     additional performance.
+                     .
+                     Some algorithms are designed to work only when the input list
+                     has length a power of two. Use binary lists to ensure this
+                     property in the input. In addition, this library exports
+                     some useful functions for this kind of algorithms. An example
+                     implementing the Fast Fourier Transform is provided in the
+                     "Data.BinaryList" module.
+                     .
+                     The package contains an additional module with utilities for
+                     the (de)serialization of binary lists.
 license:             BSD3
 license-file:        LICENSE
 author:              Daniel Díaz
