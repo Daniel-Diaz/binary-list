@@ -40,6 +40,7 @@ module Data.BinaryList (
   , replicateA
   , replicateAR
   , generate
+  , generateM
     -- * Queries
   , lengthIndex
   , length
@@ -76,7 +77,8 @@ import Control.Arrow ((***))
 import Data.Monoid (mappend)
 import Data.Foldable (Foldable (..),toList)
 import Data.Traversable (Traversable (..))
-import Control.Monad.Trans.State (StateT (..),evalState,get,modify)
+import Control.Monad.Trans.State (StateT (..),evalStateT,evalState,get,modify)
+import Control.Monad.Trans.Class (lift)
 import Data.Functor.Identity (Identity (..))
 
 -- | /O(1)/. Build a list with a single element.
@@ -175,6 +177,11 @@ replicate n = runIdentity . replicateA n . Identity
 --   by applying a function to each index.
 generate :: Int -> (Int -> a) -> BinList a
 generate l f = evalState (replicateA l $ fmap f get <* modify (+1)) 0
+
+-- | Like 'generate', but the generator function returns a value in a 'Monad'.
+--   Therefore, the result is as well contained in a 'Monad'.
+generateM :: (Applicative m, Monad m) => Int -> (Int -> m a) -> m (BinList a)
+generateM l f = evalStateT (replicateA l $ (get >>= lift . f) <* modify (+1)) 0
 
 -- | /O(log n)/. Get the first element of a binary list.
 head :: BinList a -> a
