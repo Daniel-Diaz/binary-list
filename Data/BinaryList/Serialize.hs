@@ -103,6 +103,7 @@ data Decoded a = -- | Partial binary list, and rest of decoded input.
                | FinalResult (BinList a) ByteString
                  -- | A decoding error, with an error message and the remaining input.
                | DecodingError String ByteString
+                 deriving Show
 
 -- | Get the final result of a decoding process, unless it returned an error, in which
 --   case this error is returned as a 'String'.
