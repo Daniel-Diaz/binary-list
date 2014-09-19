@@ -52,7 +52,7 @@ decode input = encodedFromByteString input >>= fromDecoded . decData . decodeBin
 --   If you foresee reading only a part of the list, either
 --   at its beginning or end, an appropiate choice of direction
 --   will allow you to avoid decoding the full list.
-data Direction = FromLeft | FromRight deriving Eq
+data Direction = FromLeft | FromRight deriving (Eq,Show)
 
 -- | A binary list encoded, ready to be written in a file or be
 --   sent over a network. It can be directly translated to a
