@@ -51,6 +51,7 @@ module Data.BinaryList (
   , split
   , take
   , takeEnd
+  , filter
     -- * Transformation
   , reverse
     -- * Tuples
@@ -66,7 +67,9 @@ module Data.BinaryList (
     -- $fft
   ) where
 
-import Prelude hiding ( length,lookup,replicate,head,last,zip,unzip,zipWith,reverse,foldr1,take,map )
+import Prelude hiding ( length,lookup,replicate,head,last
+                      , zip,unzip,zipWith,reverse,foldr1
+                      , take,map,foldr,filter )
 import qualified Prelude
 import Foreign.Storable (sizeOf)
 import Data.List (find)
@@ -192,6 +195,11 @@ head (ListEnd x) = x
 last :: BinList a -> a
 last (ListNode _ _ r) = last r
 last (ListEnd x) = x
+
+-- | /O(n)/. Create a list from the elements of a binary list matching a given
+--   condition.
+filter :: (a -> Bool) -> BinList a -> [a]
+filter c = foldr (\x -> if c x then (x:) else id) []
 
 {-# INLINE[2] reverse #-}
 
@@ -464,7 +472,5 @@ Fourier Transform of complex vectors with the Radix-2 Fast Fourier Transform alg
 >       in  fromJust $
 >             BL.append (BL.zipWith (+) evensfft oddsfft)
 >                       (BL.zipWith (-) evensfft oddsfft)
-
-
 
 -}
