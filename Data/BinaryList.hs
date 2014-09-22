@@ -65,6 +65,7 @@ module Data.BinaryList (
   , fromListWithDefault
     -- ** To list
   , toListFilter
+  , toListSegment
     -- * Example: Radix-2 FFT
     -- $fft
   ) where
@@ -398,11 +399,27 @@ fromListWithDefault e xs =
                ) xs
         _ -> error "[binary-list] fromListWithDefault: input list is too big."
 
-
 -- | /O(n)/. Create a list from the elements of a binary list matching a given
 --   condition.
 toListFilter :: (a -> Bool) -> BinList a -> [a]
 toListFilter c = foldr (\x -> if c x then (x:) else id) []
+
+-- | /O(n)/. Create a list extracting a sublist of elements from a binary list.
+toListSegment :: Int -- ^ Starting index
+              -> Int -- ^ Ending index
+              -> BinList a -> [a]
+toListSegment s e xs = if s > e then [] else go1 0 $ toList xs
+  where
+    go1 i (h:t) = if i < s
+                     then go1 (i+1) t
+                     else if i <= e
+                             then h : go2 (i+1) t
+                             else go2 (i+1) t
+    go1 _ [] = []
+    go2 i (h:t) = if i > e
+                     then []
+                     else h : go2 (i+1) t
+    go2 _ [] = []
 
 -----------------------------
 -- Show and Functor instances
