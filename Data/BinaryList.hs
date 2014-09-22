@@ -71,7 +71,7 @@ module Data.BinaryList (
 
 import Prelude hiding ( length,lookup,replicate,head,last
                       , zip,unzip,zipWith,reverse,foldr1
-                      , take,map,foldr,filter )
+                      , take,map,foldr )
 import qualified Prelude
 import Foreign.Storable (sizeOf)
 import Data.List (find)
@@ -396,7 +396,7 @@ fromListWithDefault e xs =
                       (h:t) -> (h,t)
                       [] -> (e,[])
                ) xs
-        _ -> error "fromListWithDefault: input list is too big."
+        _ -> error "[binary-list] fromListWithDefault: input list is too big."
 
 
 -- | /O(n)/. Create a list from the elements of a binary list matching a given
