@@ -51,7 +51,6 @@ module Data.BinaryList (
   , split
   , take
   , takeEnd
-  , filter
     -- * Transformation
   , reverse
     -- * Tuples
@@ -61,8 +60,11 @@ module Data.BinaryList (
   , zip , unzip
   , zipWith
     -- * Lists
+    -- ** From list
   , fromList
   , fromListWithDefault
+    -- ** To list
+  , toListFilter
     -- * Example: Radix-2 FFT
     -- $fft
   ) where
@@ -195,11 +197,6 @@ head (ListEnd x) = x
 last :: BinList a -> a
 last (ListNode _ _ r) = last r
 last (ListEnd x) = x
-
--- | /O(n)/. Create a list from the elements of a binary list matching a given
---   condition.
-filter :: (a -> Bool) -> BinList a -> [a]
-filter c = foldr (\x -> if c x then (x:) else id) []
 
 {-# INLINE[2] reverse #-}
 
@@ -400,6 +397,12 @@ fromListWithDefault e xs =
                       [] -> (e,[])
                ) xs
         _ -> error "fromListWithDefault: input list is too big."
+
+
+-- | /O(n)/. Create a list from the elements of a binary list matching a given
+--   condition.
+toListFilter :: (a -> Bool) -> BinList a -> [a]
+toListFilter c = foldr (\x -> if c x then (x:) else id) []
 
 -----------------------------
 -- Show and Functor instances
