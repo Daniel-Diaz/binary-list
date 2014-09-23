@@ -494,7 +494,7 @@ instance Applicative (ListBuilder t) where
   {-# INLINE (<*>) #-}
   ListBuilder f <*> ListBuilder g = ListBuilder (f . g)
   {-# INLINE (*>) #-}
-  ListBuilder f *> ListBuilder g = ListBuilder (f . g)
+  ListBuilder f  *> ListBuilder g = ListBuilder (f . g)
 
 -- | /O(n)/. Create a list extracting a sublist of elements from a binary list.
 toListSegment :: Int -> Int -> BinList a -> [a]
