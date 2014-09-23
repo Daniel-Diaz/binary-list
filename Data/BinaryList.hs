@@ -404,22 +404,23 @@ fromListWithDefault e xs =
 toListFilter :: (a -> Bool) -> BinList a -> [a]
 toListFilter c = foldr (\x -> if c x then (x:) else id) []
 
--- | /O(n)/. Create a list extracting a sublist of elements from a binary list.
-toListSegment :: Int -- ^ Starting index
-              -> Int -- ^ Ending index
-              -> BinList a -> [a]
-toListSegment s e xs = if s > e then [] else go1 0 $ toList xs
-  where
-    go1 i (h:t) = if i < s
-                     then go1 (i+1) t
-                     else if i <= e
-                             then h : go2 (i+1) t
-                             else go2 (i+1) t
-    go1 _ [] = []
-    go2 i (h:t) = if i > e
-                     then []
-                     else h : go2 (i+1) t
-    go2 _ [] = []
+{-# INLINE toListSegment #-}
+
+toListSegment :: Int -> Int -> BinList a -> [a]
+toListSegment s e xs = if s > e then [] else toListSegmentDiff s e xs []
+
+toListSegmentDiff :: Int -> Int -> BinList a -> [a] -> [a]
+toListSegmentDiff s e (ListNode n l r) =
+  let k = 2^(n-1)
+  in  if s >= k
+         -- Sublist is contained in right portion
+         then toListSegmentDiff (s - k) (e - k) r
+         else if e < k
+                 -- Sublist is contained in left portion
+                 then toListSegmentDiff s e l
+                 -- Sublist is divided in both portions
+                 else toListSegmentDiff s e l . toListSegmentDiff (s - k) (e - k) r
+toListSegmentDiff s e (ListEnd x) = if s <= 0 && 0 <= e then (x:) else id
 
 -----------------------------
 -- Show and Functor instances
