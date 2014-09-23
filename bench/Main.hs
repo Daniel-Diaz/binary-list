@@ -1,6 +1,4 @@
 
-{-# LANGUAGE RankNTypes #-}
-
 import Data.BinaryList (BinList)
 import qualified Data.BinaryList as BL
 
