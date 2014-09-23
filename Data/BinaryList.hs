@@ -406,6 +406,7 @@ toListFilter c = foldr (\x -> if c x then (x:) else id) []
 
 {-# INLINE toListSegment #-}
 
+-- | /O(n)/. Create a list extracting a sublist of elements from a binary list.
 toListSegment :: Int -> Int -> BinList a -> [a]
 toListSegment s e xs = if s > e then [] else toListSegmentDiff s e xs []
 
