@@ -66,6 +66,8 @@ module Data.BinaryList (
     -- ** To list
   , toListFilter
   , toListSegment
+    -- * Others
+  , traverseSegment
     -- * Example: Radix-2 FFT
     -- $fft
   ) where
@@ -399,61 +401,108 @@ fromListWithDefault e xs =
                ) xs
         _ -> error "[binary-list] fromListWithDefault: input list is too big."
 
+{-# INLINE toListFilter #-}
+
 -- | /O(n)/. Create a list from the elements of a binary list matching a given
 --   condition.
 toListFilter :: (a -> Bool) -> BinList a -> [a]
 toListFilter c = foldr (\x -> if c x then (x:) else id) []
 
-{-# INLINE toListSegment #-}
+{-# INLINE traverseSegment #-}
+
+-- | Apply an applicative action to every element in a segment of a binary list, from left to right.
+traverseSegment :: Applicative f => (a -> f ()) -> Int -> Int -> BinList a -> f ()
+traverseSegment f s e xs
+  | s > e = pure ()
+  | e < 0 = pure ()
+  | s >= length xs = pure ()
+  | otherwise = traverseSegmentFromTo f (max 0 s) e xs
+
+{-# INLINE traverseSegmentFromTo #-}
+
+traverseSegmentFromTo :: Applicative f => (a -> f ()) -> Int -> Int -> BinList a -> f ()
+traverseSegmentFromTo f = go
+  where
+    go s e (ListNode n l r) =
+      let k = 2^(n-1)
+      in  if s >= k
+             -- Sublist is contained in right portion
+             then go (s - k) (e - k) r
+             else if e < k
+                     -- Sublist is contained in left portion
+                     then go s e l
+                     -- Sublist is divided in both portions
+                     else traverseSegmentFrom f s l *> traverseSegmentTo f (e - k) r
+    go _ _ (ListEnd x) = f x
+
+{-# INLINE traverseSegmentFrom #-}
+
+traverseSegmentFrom :: Applicative f => (a -> f ()) -> Int -> BinList a -> f ()
+traverseSegmentFrom f = go
+  where
+    go s (ListNode n l r) =
+      let k = 2^(n-1)
+      in  if s >= k
+             -- Sublist is contained in right portion
+             then go (s - k) r
+             -- Sublist is divided in both portions, but right
+             -- portion is taken entirely
+             else go s l *> traverseFull f r
+    go _ (ListEnd x) = f x
+
+{-# INLINE traverseSegmentTo #-}
+
+traverseSegmentTo :: Applicative f => (a -> f ()) -> Int -> BinList a -> f ()
+traverseSegmentTo f = go
+  where
+    go e (ListNode n l r) =
+      let k = 2^(n-1)
+      in  if e < k
+             -- Sublist is contained in left portion
+             then go e l
+             -- Sublist is divided in both portions, but left
+             -- portion is taken entirely
+             else traverseFull f l *> go (e - k) r
+    go _ (ListEnd x) = f x
+
+{-# INLINE traverseFull #-}
+
+traverseFull :: Applicative f => (a -> f ()) -> BinList a -> f ()
+traverseFull f = go
+  where
+    go (ListEnd x) = f x
+    go (ListNode _ l r) = go l *> go r
+
+------------------------------------------------
+-- List builder for fast list segment extraction
+
+-- | A list builder is a phantom type equivalent to
+--   difference lists.
+newtype ListBuilder t a = ListBuilder ([t] -> [t])
+
+buildList :: ListBuilder t a -> [t]
+{-# INLINE buildList #-}
+buildList (ListBuilder f) = f []
+
+instance Functor (ListBuilder t) where
+  {-# INLINE fmap #-}
+  fmap _ (ListBuilder f) = ListBuilder f
+
+instance Applicative (ListBuilder t) where
+  {-# INLINE pure #-}
+  pure _ = ListBuilder id
+  {-# INLINE (<*>) #-}
+  ListBuilder f <*> ListBuilder g = ListBuilder (f . g)
+  {-# INLINE (*>) #-}
+  ListBuilder f *> ListBuilder g = ListBuilder (f . g)
 
 -- | /O(n)/. Create a list extracting a sublist of elements from a binary list.
 toListSegment :: Int -> Int -> BinList a -> [a]
-toListSegment s e xs
-  | s > e = []
-  | e < 0 = []
-  | s >= length xs = []
-  | otherwise = toListSegmentDiff (max 0 s) e xs []
+{-# INLINE toListSegment #-}
+toListSegment s e xs = buildList $ traverseSegment (ListBuilder . (:)) s e xs
 
-toListSegmentDiff :: Int -> Int -> BinList a -> [a] -> [a]
-toListSegmentDiff s e (ListNode n l r) =
-  let k = 2^(n-1)
-  in  if s >= k
-         -- Sublist is contained in right portion
-         then toListSegmentDiff (s - k) (e - k) r
-         else if e < k
-                 -- Sublist is contained in left portion
-                 then toListSegmentDiff s e l
-                 -- Sublist is divided in both portions
-                 else toListSegmentDiffFrom s l . toListSegmentDiffTo (e - k) r
-toListSegmentDiff _ _ (ListEnd x) = (x:)
-
-toListSegmentDiffFrom :: Int -> BinList a -> [a] -> [a]
-toListSegmentDiffFrom s (ListNode n l r) =
-  let k = 2^(n-1)
-  in  if s >= k
-         -- Sublist is contained in right portion
-         then toListSegmentDiffFrom (s - k) r
-         -- Sublist is divided in both portions, but right
-         -- portion is taken entirely
-         else toListSegmentDiffFrom s l . toListDiff r
-toListSegmentDiffFrom _ (ListEnd x) = (x:)
-
-toListSegmentDiffTo :: Int -> BinList a -> [a] -> [a]
-toListSegmentDiffTo e (ListNode n l r) =
-  let k = 2^(n-1)
-  in  if e < k
-         -- Sublist is contained in left portion
-         then toListSegmentDiffTo e l
-         -- Sublist is divided in both portions, but left
-         -- portion is taken entirely
-         else toListDiff l . toListSegmentDiffTo (e - k) r
-toListSegmentDiffTo _ (ListEnd x) = (x:)
-
-{-# INLINE toListDiff #-}
-
-toListDiff :: BinList a -> [a] -> [a]
-toListDiff (ListEnd x) = (x:)
-toListDiff (ListNode _ l r) = toListDiff l . toListDiff r
+------------------------------------------------
+------------------------------------------------
 
 -----------------------------
 -- Show and Functor instances
