@@ -408,7 +408,11 @@ toListFilter c = foldr (\x -> if c x then (x:) else id) []
 
 -- | /O(n)/. Create a list extracting a sublist of elements from a binary list.
 toListSegment :: Int -> Int -> BinList a -> [a]
-toListSegment s e xs = if s > e then [] else toListSegmentDiff s e xs []
+toListSegment s e xs
+  | s > e = []
+  | e < 0 = []
+  | s >= length xs = []
+  | otherwise = toListSegmentDiff (max 0 s) e xs []
 
 toListSegmentDiff :: Int -> Int -> BinList a -> [a] -> [a]
 toListSegmentDiff s e (ListNode n l r) =
@@ -420,8 +424,36 @@ toListSegmentDiff s e (ListNode n l r) =
                  -- Sublist is contained in left portion
                  then toListSegmentDiff s e l
                  -- Sublist is divided in both portions
-                 else toListSegmentDiff s e l . toListSegmentDiff (s - k) (e - k) r
-toListSegmentDiff s e (ListEnd x) = if s <= 0 && 0 <= e then (x:) else id
+                 else toListSegmentDiffFrom s l . toListSegmentDiffTo (e - k) r
+toListSegmentDiff _ _ (ListEnd x) = (x:)
+
+toListSegmentDiffFrom :: Int -> BinList a -> [a] -> [a]
+toListSegmentDiffFrom s (ListNode n l r) =
+  let k = 2^(n-1)
+  in  if s >= k
+         -- Sublist is contained in right portion
+         then toListSegmentDiffFrom (s - k) r
+         -- Sublist is divided in both portions, but right
+         -- portion is taken entirely
+         else toListSegmentDiffFrom s l . toListDiff r
+toListSegmentDiffFrom _ (ListEnd x) = (x:)
+
+toListSegmentDiffTo :: Int -> BinList a -> [a] -> [a]
+toListSegmentDiffTo e (ListNode n l r) =
+  let k = 2^(n-1)
+  in  if e < k
+         -- Sublist is contained in left portion
+         then toListSegmentDiffTo e l
+         -- Sublist is divided in both portions, but left
+         -- portion is taken entirely
+         else toListDiff l . toListSegmentDiffTo (e - k) r
+toListSegmentDiffTo _ (ListEnd x) = (x:)
+
+{-# INLINE toListDiff #-}
+
+toListDiff :: BinList a -> [a] -> [a]
+toListDiff (ListEnd x) = (x:)
+toListDiff (ListNode _ l r) = toListDiff l . toListDiff r
 
 -----------------------------
 -- Show and Functor instances
