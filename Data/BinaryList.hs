@@ -88,6 +88,7 @@ import Data.Traversable (Traversable (..))
 import Control.Monad.Trans.State (StateT (..),evalStateT,evalState,get,modify)
 import Control.Monad.Trans.Class (lift)
 import Data.Functor.Identity (Identity (..))
+import Control.Monad.PhantomState
 
 -- | /O(1)/. Build a list with a single element.
 singleton :: a -> BinList a
@@ -408,6 +409,11 @@ fromListWithDefault e xs =
 toListFilter :: (a -> Bool) -> BinList a -> [a]
 toListFilter c = foldr (\x -> if c x then (x:) else id) []
 
+-- | /O(n)/. Create a list extracting a sublist of elements from a binary list.
+toListSegment :: Int -> Int -> BinList a -> [a]
+{-# INLINE toListSegment #-}
+toListSegment s e xs = runPhantomState (traverseSegment (changeState . (:)) s e xs) []
+
 {-# INLINE traverseSegment #-}
 
 -- | Apply an applicative action to every element in a segment of a binary list, from left to right.
@@ -472,34 +478,6 @@ traverseFull f = go
   where
     go (ListEnd x) = f x
     go (ListNode _ l r) = go l *> go r
-
-------------------------------------------------
--- List builder for fast list segment extraction
-
--- | A list builder is a phantom type equivalent to
---   difference lists.
-newtype ListBuilder t a = ListBuilder ([t] -> [t])
-
-buildList :: ListBuilder t a -> [t]
-{-# INLINE buildList #-}
-buildList (ListBuilder f) = f []
-
-instance Functor (ListBuilder t) where
-  {-# INLINE fmap #-}
-  fmap _ (ListBuilder f) = ListBuilder f
-
-instance Applicative (ListBuilder t) where
-  {-# INLINE pure #-}
-  pure _ = ListBuilder id
-  {-# INLINE (<*>) #-}
-  ListBuilder f <*> ListBuilder g = ListBuilder (f . g)
-  {-# INLINE (*>) #-}
-  ListBuilder f  *> ListBuilder g = ListBuilder (f . g)
-
--- | /O(n)/. Create a list extracting a sublist of elements from a binary list.
-toListSegment :: Int -> Int -> BinList a -> [a]
-{-# INLINE toListSegment #-}
-toListSegment s e xs = buildList $ traverseSegment (ListBuilder . (:)) s e xs
 
 ------------------------------------------------
 ------------------------------------------------
