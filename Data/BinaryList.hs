@@ -88,7 +88,7 @@ import Data.Traversable (Traversable (..))
 import Control.Monad.Trans.State (StateT (..),evalStateT,evalState,get,modify)
 import Control.Monad.Trans.Class (lift)
 import Data.Functor.Identity (Identity (..))
-import Control.Monad.PhantomState
+import Control.Applicative.PhantomState
 
 -- | /O(1)/. Build a list with a single element.
 singleton :: a -> BinList a
