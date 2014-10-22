@@ -133,9 +133,9 @@ replace i0 y = go i0
     go i (ListNode n l r) =
       let m = 2^(n-1)
       in  if i < m
-             then ListNode (go i l)          r
-             else ListNode       l (go (i-m) r)
-    go 0 (ListEnd x) = ListEnd y
+             then ListNode n (go i l)          r
+             else ListNode n       l (go (i-m) r)
+    go 0 (ListEnd _) = ListEnd y
     go _ e = e
 
 -- | /O(1)/. Append two binary lists. This is only possible
