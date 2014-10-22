@@ -52,6 +52,7 @@ module Data.BinaryList (
   , take
   , takeEnd
     -- * Transformation
+  , replace
   , reverse
     -- * Tuples
   , joinPairs
@@ -121,6 +122,21 @@ lookup (ListNode n l r) i =
           else lookup r $ i - m -- Lookup in the right branch
 lookup (ListEnd x) 0 = Just x
 lookup _ _ = Nothing
+
+-- | /O(log n)/. Replace a single element in the list. If the index is
+--   out of range, returns the original list.
+replace :: Int -- ^ Index to look for
+        -> a   -- ^ Element to insert
+        -> BinList a -> BinList a
+replace i0 y = go i0
+  where
+    go i (ListNode n l r) =
+      let m = 2^(n-1)
+      in  if i < m
+             then ListNode (go i l)          r
+             else ListNode       l (go (i-m) r)
+    go 0 (ListEnd x) = ListEnd y
+    go _ e = e
 
 -- | /O(1)/. Append two binary lists. This is only possible
 --   if both lists have the same length. If this condition
