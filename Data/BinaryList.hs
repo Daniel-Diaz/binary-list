@@ -418,11 +418,11 @@ fromListWithDefault e xs =
                ) xs
         _ -> error "[binary-list] fromListWithDefault: input list is too big."
 
-{-# INLINE toListFilter #-}
 
 -- | /O(n)/. Create a list from the elements of a binary list matching a given
 --   condition.
 toListFilter :: (a -> Bool) -> BinList a -> [a]
+{-# INLINE toListFilter #-}
 toListFilter c = foldr (\x -> if c x then (x:) else id) []
 
 -- | /O(n)/. Create a list extracting a sublist of elements from a binary list.
