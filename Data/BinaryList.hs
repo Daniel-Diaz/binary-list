@@ -64,6 +64,7 @@ module Data.BinaryList (
     -- ** From list
   , fromList
   , fromListWithDefault
+  , fromListSplit
     -- ** To list
   , toListFilter
   , toListSegment
@@ -86,7 +87,11 @@ import Control.Arrow ((***))
 import Data.Monoid (mappend)
 import Data.Foldable (Foldable (..),toList)
 import Data.Traversable (Traversable (..))
-import Control.Monad.Trans.State (StateT (..),evalStateT,evalState,get,modify)
+import Control.Monad.Trans.State
+  ( StateT (..)
+  , evalStateT ,evalState
+  , runState
+  , get ,modify )
 import Control.Monad.Trans.Class (lift)
 import Data.Functor.Identity (Identity (..))
 import Control.Applicative.PhantomState
@@ -413,11 +418,26 @@ fromListWithDefault e xs =
         Just n ->
           evalState (replicateA n $ StateT $
              \ys -> pure $ case ys of
-                      (h:t) -> (h,t)
-                      [] -> (e,[])
+                      (h:t) -> (h,t )
+                      _     -> (e,[])
                ) xs
         _ -> error "[binary-list] fromListWithDefault: input list is too big."
 
+-- | /O(n)/. Build a binary list from a linked list. It returns a binary list
+--   with length @2 ^ n@ (where @n@ is the supplied 'Int' argument), and
+--   the list of elements of the original list that were not used. If the
+--   input list is shorter than @2 ^ n@, a default element will be used to
+--   complete the binary list. This method for building binary lists is faster
+--   than both 'fromList' and 'fromListWithDefault'.
+fromListSplit :: a   -- ^ Default element
+              -> Int -- ^ Length index
+              -> [a] -- ^ Input list
+              -> (BinList a, [a])
+fromListSplit e n =
+  runState $ replicateA n $ StateT $
+    \xs -> pure $ case xs of
+                    (h:t) -> (h,t )
+                    _     -> (e,[])
 
 -- | /O(n)/. Create a list from the elements of a binary list matching a given
 --   condition.
