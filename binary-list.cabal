@@ -1,6 +1,6 @@
 name:                binary-list
 version:             0.3.5.0
-synopsis:            Lists of size length a power of two.
+synopsis:            Lists of length a power of two.
 description:         Implementation of lists whose number of elements is a
                      power of two. Binary lists have this property by definition,
                      so it is impossible to build a value with other kind of length.
