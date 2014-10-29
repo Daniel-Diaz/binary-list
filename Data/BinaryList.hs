@@ -223,10 +223,9 @@ last :: BinList a -> a
 last (ListNode _ _ r) = last r
 last (ListEnd x) = x
 
-{-# INLINE[2] reverse #-}
-
 -- | /O(n)/. Reverse a binary list.
 reverse :: BinList a -> BinList a
+{-# INLINE[2] reverse #-}
 reverse (ListNode n l r) = ListNode n (reverse r) (reverse l)
 reverse xs = xs
 
@@ -238,22 +237,20 @@ reverse xs = xs
 ------------------------------
 -- Transformations with tuples
 
-{-# INLINE[1] joinPairs #-}
-
 -- | /O(n)/. Transform a list of pairs into a flat list. The
 --   resulting list will have twice more elements than the
 --   original.
 joinPairs :: BinList (a,a) -> BinList a
+{-# INLINE[1] joinPairs #-}
 joinPairs (ListEnd (x,y)) = ListNode 1 (ListEnd x) (ListEnd y)
 joinPairs (ListNode n l r) = ListNode (n+1) (joinPairs l) (joinPairs r)
-
-{-# INLINE [1] disjoinPairs #-}
 
 -- | /O(n)/. Opposite transformation of 'joinPairs'. It halves
 --   the number of elements of the input. As a result, when
 --   applied to a binary list with a single element, it returns
 --   'Nothing'.
 disjoinPairs :: BinList a -> Maybe (BinList (a,a))
+{-# INLINE [1] disjoinPairs #-}
 disjoinPairs (ListEnd _) = Nothing
 disjoinPairs xs = Just $ disjoinPairsNodes xs
 
@@ -272,11 +269,10 @@ disjoinPairsNodes _ = error "disjoinPairsNodes: bug. Please, report this with an
          forall f xs . disjoinPairs (map f (joinPairs xs)) = Just (map (f *** f) xs)
   #-}
 
-{-# INLINE[0] pairBuilder #-}
-
 -- | Expression @pairBuilder f xs@ is equivalent to @joinPairs (map f xs)@, but does
 --   not build any intermediate structure. Used for rewriting rules.
 pairBuilder :: (a -> (b,b)) -> BinList a -> BinList b
+{-# INLINE[0] pairBuilder #-}
 pairBuilder f = go
   where
     go (ListEnd x) = let (a,b) = f x in ListNode 1 (ListEnd a) (ListEnd b)
@@ -340,16 +336,14 @@ zipWith f = go
                      ListNode n (goEquals l l') (goEquals r r')
     goEquals xs ys = ListEnd $ f (head xs) (head ys)
 
-{-# INLINE zip #-}
-
 -- | /O(n)/. Zip two binary lists in pairs.
 zip :: BinList a -> BinList b -> BinList (a,b)
+{-# INLINE zip #-}
 zip = zipWith (,)
-
-{-# INLINE[1] unzip #-}
 
 -- | /O(n)/. Unzip a binary list of pairs.
 unzip :: BinList (a,b) -> (BinList a, BinList b)
+{-# INLINE[1] unzip #-}
 unzip (ListEnd (x,y)) = (ListEnd x, ListEnd y)
 unzip (ListNode n l r) =
   let (la,lb) = unzip l
@@ -450,19 +444,17 @@ toListSegment :: Int -> Int -> BinList a -> [a]
 {-# INLINE toListSegment #-}
 toListSegment s e xs = runPhantomState (traverseSegment (changeState . (:)) s e xs) []
 
-{-# INLINE traverseSegment #-}
-
 -- | Apply an applicative action to every element in a segment of a binary list, from left to right.
 traverseSegment :: Applicative f => (a -> f ()) -> Int -> Int -> BinList a -> f ()
+{-# INLINE traverseSegment #-}
 traverseSegment f s e xs
   | s > e = pure ()
   | e < 0 = pure ()
   | s >= length xs = pure ()
   | otherwise = traverseSegmentFromTo f (max 0 s) e xs
 
-{-# INLINE traverseSegmentFromTo #-}
-
 traverseSegmentFromTo :: Applicative f => (a -> f ()) -> Int -> Int -> BinList a -> f ()
+{-# INLINE traverseSegmentFromTo #-}
 traverseSegmentFromTo f = go
   where
     go s e (ListNode n l r) =
@@ -477,9 +469,8 @@ traverseSegmentFromTo f = go
                      else traverseSegmentFrom f s l *> traverseSegmentTo f (e - k) r
     go _ _ (ListEnd x) = f x
 
-{-# INLINE traverseSegmentFrom #-}
-
 traverseSegmentFrom :: Applicative f => (a -> f ()) -> Int -> BinList a -> f ()
+{-# INLINE traverseSegmentFrom #-}
 traverseSegmentFrom f = go
   where
     go s (ListNode n l r) =
@@ -492,9 +483,8 @@ traverseSegmentFrom f = go
              else go s l *> traverseFull f r
     go _ (ListEnd x) = f x
 
-{-# INLINE traverseSegmentTo #-}
-
 traverseSegmentTo :: Applicative f => (a -> f ()) -> Int -> BinList a -> f ()
+{-# INLINE traverseSegmentTo #-}
 traverseSegmentTo f = go
   where
     go e (ListNode n l r) =
@@ -507,9 +497,8 @@ traverseSegmentTo f = go
              else traverseFull f l *> go (e - k) r
     go _ (ListEnd x) = f x
 
-{-# INLINE traverseFull #-}
-
 traverseFull :: Applicative f => (a -> f ()) -> BinList a -> f ()
+{-# INLINE traverseFull #-}
 traverseFull f = go
   where
     go (ListEnd x) = f x
@@ -532,8 +521,8 @@ actually writing 'map'. We do this to use 'map' in rewriting rules.
 
 -}
 
-{-# INLINE[1] map #-}
 map :: (a -> b) -> BinList a -> BinList b
+{-# INLINE[1] map #-}
 map f = go
   where
     go (ListEnd x) = ListEnd (f x)
