@@ -26,7 +26,7 @@ main = defaultMain
   [ bgroup "1024"
       [ bench "fromList" $ nf (\i -> const BL.fromList i $ list1024) 0
       , bench "fromListWithDefault" $ nf (\i -> BL.fromListWithDefault i list513) 0
-      , bench "fromListSplit" $ nf (\i -> BL.fromListSplit i 10 list1024) 0
+      , bench "fromListSplit" $ nf (\i -> BL.fromListSplit i 10 list513) 0
       , bench "generate" $ nf (\i -> BL.generate i id) 10
       , bench "replicate" $ nf (\i -> BL.replicate i (0 :: Int)) 10
       , bench "toListSegment" $ nf (\e -> BL.toListSegment 256 e blist1024) 768
