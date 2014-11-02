@@ -28,7 +28,9 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Data.BinaryList, Data.BinaryList.Serialize
   other-modules:       Data.BinaryList.Internal
-  build-depends:       base == 4.*, bytestring, binary >= 0.6.4.0
+  build-depends:       base == 4.*
+               ,       bytestring >= 0.10.0.0
+               ,       binary >= 0.6.4.0
                ,       transformers >= 0.3.0.0
                ,       phantom-state >= 0.2
                ,       deepseq
