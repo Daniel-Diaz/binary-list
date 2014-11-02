@@ -32,6 +32,8 @@ import Data.Binary.Get
 import Data.ByteString.Lazy (ByteString,empty)
 -- Backwards Applicative
 import Control.Applicative.Backwards
+-- DeepSeq
+import Control.DeepSeq (NFData (..))
 
 -- | Encode a binary list using the 'Binary' instance of
 --   its elements.
@@ -104,6 +106,11 @@ data Decoded a = -- | Partial binary list, and rest of decoded input.
                  -- | A decoding error, with an error message and the remaining input.
                | DecodingError String ByteString
                  deriving Show
+
+instance NFData a => NFData (Decoded a) where
+  rnf (PartialResult xs d) = rnf xs `seq` rnf d
+  rnf (FinalResult xs b) = rnf xs `seq` rnf b
+  rnf (DecodingError str b) = rnf str `seq` rnf b
 
 -- | Get the final result of a decoding process, unless it returned an error, in which
 --   case this error is returned as a 'String'.

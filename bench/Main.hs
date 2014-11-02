@@ -3,14 +3,10 @@ import Data.BinaryList (BinList)
 import qualified Data.BinaryList as BL
 
 import Control.Applicative
-import Control.DeepSeq
 import qualified Data.Foldable as F
 
 -- criterion
 import Criterion.Main
-
-instance NFData a => NFData (BinList a) where
-  rnf xs = F.foldl1 seq xs `seq` ()
 
 list1024 :: [Int]
 list1024 = [1..1024] -- 2^10 = 1024
