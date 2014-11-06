@@ -15,7 +15,7 @@
 --   Since many names in this module clash with the names of some "Prelude"
 --   functions, you probably want to import this module this way:
 --
--- > import Data.BinaryList (BinList)
+-- > import Data.BinaryList (BinList,Exponent)
 -- > import qualified Data.BinaryList as BL
 --
 --   Remember that binary lists are an instance of the 'Foldable' and 'Traversable'
@@ -575,7 +575,7 @@ Fourier Transform of complex vectors with the Radix-2 Fast Fourier Transform alg
 >     Nothing -> xs
 >     Just ps ->
 >       let (evens,odds) = BL.unzip ps
->           n = BL.lengthIndex xs - 1
+>           n = BL.lengthExponent xs - 1
 >           q = negate $ pi * i / fromIntegral (2^n)
 >           twiddles = BL.generate n $ \k -> exp $ q * fromIntegral k
 >           oddsfft = BL.zipWith (*) twiddles $ fft odds
