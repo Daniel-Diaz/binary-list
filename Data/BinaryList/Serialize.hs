@@ -145,7 +145,7 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
     -- | Function to get binary trees using the supplied 'Get' value.
     --   The order of the elements depends on the encoding direction.
     --
-    -- getBinList :: Int -> Get (BinList a)
+    -- getBinList :: Exponent-> Get (BinList a)
     getBinList =
        case d of
          FromLeft -> \i -> replicateA  i f
@@ -155,7 +155,7 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
     --   where the order of appending depends on the encoding
     --   direction.
     --
-    -- recAppend :: Int -> BinList a -> BinList a -> BinList a
+    -- recAppend :: Exponent -> BinList a -> BinList a -> BinList a
     recAppend = case d of
        FromLeft -> \i ->        ListNode (i+1)
        _        -> \i -> flip $ ListNode (i+1)
@@ -187,7 +187,7 @@ encodedToByteString (EncodedBinList d l b) = runPut $ do
   -- We start with 0 if the direction is left-to-right, and
   -- with 1 if the direction is right-to-left.
   putWord8 $ if d == FromLeft then 0 else 1
-  -- Int values are converted to Word64 (note that Word32 does not contain every Int in a
+  -- Exponent values are converted to Word64 (note that Word32 does not contain every Int in a
   -- 64-bit system). Then the Word64 value is encoded in big-endian format.
   putWord64be $ fromIntegral l
   putLazyByteString b
