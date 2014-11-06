@@ -8,7 +8,8 @@ import Control.DeepSeq (NFData (..))
 import Data.Word (Word8)
 
 -- | A binary list is a list containing a power of two elements.
---   Note that a binary list is never empty.
+--   Note that a binary list is never empty because it has at
+--   least @2^0 = 1@ element.
 data BinList a =
         -- Single element list.
         ListEnd a
