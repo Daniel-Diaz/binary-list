@@ -64,8 +64,8 @@ data EncodedBinList =
   EncodedBinList
     { -- | Direction of encoding.
       encDirection :: Direction
-      -- | Length index (see 'lengthIndex') of the binary list.
-    , encLength :: Int
+      -- | Length exponent (see 'lengthExponent') of the binary list.
+    , encLength :: Exponent
       -- | Encoded data.
     , encData :: ByteString
       }
@@ -73,7 +73,7 @@ data EncodedBinList =
 -- | Encode a binary list, using a custom serialization for its elements and
 --   an user-supplied direction.
 encodeBinList :: (a -> Put) -> Direction -> BinList a -> EncodedBinList
-encodeBinList f d xs = EncodedBinList d (lengthIndex xs) $
+encodeBinList f d xs = EncodedBinList d (lengthExponent xs) $
   if d == FromLeft
      then runPut $ traverse_ f xs
      else runPut $ forwards $ traverse_ (Backwards . f) xs
@@ -86,8 +86,8 @@ data DecodedBinList a =
   DecodedBinList
     { -- | Direction of encoding.
       decDirection :: Direction
-      -- | Length index (see 'lengthIndex') of the binary list.
-    , decLength :: Int
+      -- | Length exponent (see 'lengthExponent') of the binary list.
+    , decLength :: Exponent
       -- | Decoded data.
     , decData :: Decoded a
       }
@@ -151,7 +151,7 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
          FromLeft -> \i -> replicateA  i f
          _        -> \i -> replicateAR i f
 
-    -- | Function to append two binary lists of given length index,
+    -- | Function to append two binary lists of given length exponent,
     --   where the order of appending depends on the encoding
     --   direction.
     --
@@ -166,9 +166,9 @@ decodeBinList f (EncodedBinList d l b) = DecodedBinList d l $
     --    -> BinList a -- ^ Accumulated binary list.
     --    -> Decoded a
     go input xs =
-       let i = lengthIndex xs
+       let i = lengthExponent xs
        in  if i == l
-              -- If the final length index has been reached, we stop decoding.
+              -- If the final length exponent has been reached, we stop decoding.
               then FinalResult xs input
               -- Otherwise, we read another chunk of data of the same size of
               -- the already decoded data, prepending the accumulated data as

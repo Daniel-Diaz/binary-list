@@ -5,6 +5,7 @@ module Data.BinaryList.Internal
     ) where
 
 import Control.DeepSeq (NFData (..))
+import Data.Word (Word8)
 
 -- | A binary list is a list containing a power of two elements.
 --   Note that a binary list is never empty.
@@ -14,7 +15,7 @@ data BinList a =
         -- Given ListNode n l r:
         --   * n >= 1.
         --   * Both l and r have 2^(n-1) elements.
-      | ListNode {-# UNPACK #-} !Int (BinList a) (BinList a)
+      | ListNode {-# UNPACK #-} !Word8 (BinList a) (BinList a)
         deriving Eq
 
 instance NFData a => NFData (BinList a) where

@@ -24,8 +24,8 @@
 --
 --   Note that some functions like 'replicate', 'generate', or 'take', don't use
 --   the length of the list as argument, but the exponent of its length expressed
---   as a power of two. Throughout this document, this is referred (perhaps improperly)
---   as the /length index/. For example, if the list has length 16, its length index
+--   as a power of two. Throughout this document, this is referred
+--   as the /length exponent/. For example, if the list has length 16, its length exponent
 --   is 4 since 2^4 = 16. Therefore @replicate 4 0@ will create a list with 16 zeroes.
 --   Keep this in mind when using this library. Note as well that this implies that
 --   there is no need to check that the length argument is or is not a power of two.
@@ -33,6 +33,7 @@
 module Data.BinaryList (
     -- * Type
     BinList
+  , Exponent
     -- * Construction
   , singleton
   , append
@@ -42,7 +43,7 @@ module Data.BinaryList (
   , generate
   , generateM
     -- * Queries
-  , lengthIndex
+  , lengthExponent
   , length
   , lookup
   , head
@@ -95,6 +96,10 @@ import Control.Monad.Trans.State
 import Control.Monad.Trans.Class (lift)
 import Data.Functor.Identity (Identity (..))
 import Control.Applicative.PhantomState
+import Data.Word (Word8)
+
+-- | An exponent.
+type Exponent = Word8
 
 -- | /O(1)/. Build a list with a single element.
 singleton :: a -> BinList a
@@ -102,19 +107,19 @@ singleton = ListEnd
 
 -- | /O(1)/. Given a binary list @l@ with length @2^k@:
 --
--- > lengthIndex l = k
+-- > lengthExponent l = k
 --
-lengthIndex :: BinList a -> Int
-lengthIndex (ListNode n _ _) = n
-lengthIndex (ListEnd _) = 0
+lengthExponent :: BinList a -> Exponent
+lengthExponent (ListNode n _ _) = n
+lengthExponent (ListEnd _) = 0
 
 -- | /O(1)/. Number of elements in the list.
 length :: BinList a -> Int
-length = (2^) . lengthIndex
+length = (2^) . lengthExponent
 
 {-# RULES
        "Data.BinaryList: length equality"
-         forall xs ys . length xs == length ys = lengthIndex xs == lengthIndex ys
+         forall xs ys . length xs == length ys = lengthExponent xs == lengthExponent ys
   #-}
 
 -- | /O(log n)/. Lookup an element in the list by its index (starting from 0).
@@ -148,8 +153,8 @@ replace i0 y = go i0
 --   is not hold, 'Nothing' is returned.
 append :: BinList a -> BinList a -> Maybe (BinList a)
 append xs ys =
-  let i = lengthIndex xs
-  in  if i == lengthIndex ys
+  let i = lengthExponent xs
+  in  if i == lengthExponent ys
          then Just $ ListNode (i+1) xs ys
          else Nothing
 
@@ -161,18 +166,18 @@ split (ListNode _ l r) = Right (l,r)
 split (ListEnd x) = Left x
 
 -- | /O(log n)/. Calling @take n xs@ returns the first @min (2^n) (length xs)@ elements of @xs@.
-take :: Int -> BinList a -> BinList a
+take :: Exponent -> BinList a -> BinList a
 take k xs@(ListNode n l _) = if k >= n then xs else take k l
 take _ xs = xs
 
 -- | /O(log n)/. Calling @takeEnd n xs@ returns the last @min (2^n) (length xs)@ elements of @xs@.
-takeEnd :: Int -> BinList a -> BinList a
+takeEnd :: Exponent -> BinList a -> BinList a
 takeEnd k xs@(ListNode n _ r) = if k >= n then xs else takeEnd k r
 takeEnd _ xs = xs
 
 -- | Calling @replicateA n f@ builds a binary list collecting the results of
 --   executing @2^n@ times the applicative action @f@.
-replicateA :: Applicative f => Int -> f a -> f (BinList a)
+replicateA :: Applicative f => Exponent -> f a -> f (BinList a)
 replicateA n f = go n
   where
     go 0 = ListEnd <$> f
@@ -180,7 +185,7 @@ replicateA n f = go n
            in  ListNode <$> pure i <*> b <*> b
 
 -- | The same as 'replicateA', but the actions are executed in reversed order.
-replicateAR :: Applicative f => Int -> f a -> f (BinList a)
+replicateAR :: Applicative f => Exponent -> f a -> f (BinList a)
 replicateAR n = forwards . replicateA n . Backwards
 
 {-# RULES
@@ -195,7 +200,7 @@ replicateAR n = forwards . replicateA n . Backwards
 
 -- | /O(log n)/. Calling @replicate n x@ builds a binary list with
 --   @2^n@ occurences of @x@.
-replicate :: Int -> a -> BinList a
+replicate :: Exponent -> a -> BinList a
 replicate n = runIdentity . replicateA n . Identity
 
 {-# RULES
@@ -203,14 +208,14 @@ replicate n = runIdentity . replicateA n . Identity
          forall f n x . map f (replicate n x) = replicate n (f x)
   #-}
 
--- | /O(n)/. Build a binary list with the given length index (see 'lengthIndex')
+-- | /O(n)/. Build a binary list with the given length exponent (see 'lengthExponent')
 --   by applying a function to each index.
-generate :: Int -> (Int -> a) -> BinList a
+generate :: Exponent -> (Int -> a) -> BinList a
 generate l f = evalState (replicateA l $ fmap f get <* modify (+1)) 0
 
 -- | Like 'generate', but the generator function returns a value in a 'Monad'.
 --   Therefore, the result is as well contained in a 'Monad'.
-generateM :: (Applicative m, Monad m) => Int -> (Int -> m a) -> m (BinList a)
+generateM :: (Applicative m, Monad m) => Exponent -> (Int -> m a) -> m (BinList a)
 generateM l f = evalStateT (replicateA l $ (get >>= lift . f) <* modify (+1)) 0
 
 -- | /O(log n)/. Get the first element of a binary list.
@@ -371,7 +376,7 @@ unzipMap f = go
 
 -- | /O(log n)/. Calculate the exponent of a positive integer number expressed
 --   as a power of two.
-exponentInBasisTwo :: Int -> Maybe Int
+exponentInBasisTwo :: Int -> Maybe Exponent
 exponentInBasisTwo 1 = Just 0
 exponentInBasisTwo n =
   if even n
@@ -390,13 +395,13 @@ fromList xs = fmap builder . exponentInBasisTwo $ Prelude.length xs
 -- /Note: This value is system dependent, since the type 'Int' varies in size/
 -- /from system to system./
 --
-lastExponentOfTwo :: Int
-lastExponentOfTwo = 8 * sizeOf (undefined :: Int) - 2
+lastExponentOfTwo :: Exponent
+lastExponentOfTwo = fromIntegral $ 8 * sizeOf (undefined :: Int) - 2
 
 -- | /O(1)/. Calculate the next power of two exponent, if there is any. It is possible
 --   to not find a next one since the type 'Int' is finite. If the input is
 --   already a power of two, its exponent is returned.
-nextExponentOfTwo :: Int -> Maybe Int
+nextExponentOfTwo :: Int -> Maybe Exponent
 nextExponentOfTwo n = find (\i -> n <= 2^i) [0 .. lastExponentOfTwo]
 
 -- | /O(n)/. Build a binary list from a linked list. If the input list
@@ -424,7 +429,7 @@ fromListWithDefault e xs =
 --   complete the binary list. This method for building binary lists is faster
 --   than both 'fromList' and 'fromListWithDefault'.
 fromListSplit :: a   -- ^ Default element
-              -> Int -- ^ Length index
+              -> Exponent -- ^ Length exponent
               -> [a] -- ^ Input list
               -> (BinList a, [a])
 fromListSplit e n =

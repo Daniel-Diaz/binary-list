@@ -1,5 +1,5 @@
 name:                binary-list
-version:             0.4.0.0
+version:             1.0.0.0
 synopsis:            Lists of length a power of two.
 description:         Implementation of lists whose number of elements is a
                      power of two. Binary lists have this property by definition,
