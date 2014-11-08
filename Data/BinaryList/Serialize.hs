@@ -108,8 +108,8 @@ data Decoded a = -- | Partial binary list, and rest of decoded input.
                  deriving Show
 
 instance NFData a => NFData (Decoded a) where
-  rnf (PartialResult xs d) = rnf xs `seq` rnf d
-  rnf (FinalResult xs b) = rnf xs `seq` rnf b
+  rnf (PartialResult xs  d) = rnf xs  `seq` rnf d
+  rnf (FinalResult   xs  b) = rnf xs  `seq` rnf b
   rnf (DecodingError str b) = rnf str `seq` rnf b
 
 -- | Get the final result of a decoding process, unless it returned an error, in which
