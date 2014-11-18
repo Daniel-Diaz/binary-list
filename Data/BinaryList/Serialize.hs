@@ -14,6 +14,7 @@ module Data.BinaryList.Serialize (
    , Decoded (..)
    , fromDecoded
    , toDecoded
+   , decodedToList
    , decodeBinList
      -- ** ByteString translations
    , encodedToByteString
@@ -133,6 +134,12 @@ toDecoded xs =
         Right (l,_) -> go l $ PartialResult ys d
         _ -> PartialResult ys d
 
+-- | Extract the list of binary lists from a 'Decoded' value.
+decodedToList :: Decoded a -> [BinList a]
+decodedToList (PartialResult xs d) = xs : decodedToList d
+decodedToList (FinalResult xs _) = [xs]
+decodedToList (DecodingError _ _) = []
+
 -- | Decode an encoded binary list.
 --   The result is given as a 'DecodedBinList' value, which can then be
 --   queried to get partial results.
@@ -187,8 +194,7 @@ encodedToByteString (EncodedBinList d l b) = runPut $ do
   -- We start with 0 if the direction is left-to-right, and
   -- with 1 if the direction is right-to-left.
   putWord8 $ if d == FromLeft then 0 else 1
-  -- Exponent values are converted to Word64 (note that Word32 does not contain every Int in a
-  -- 64-bit system). Then the Word64 value is encoded in big-endian format.
+  -- Exponent values are converted to Word64 for backwards compatibility.
   putWord64be $ fromIntegral l
   putLazyByteString b
 
