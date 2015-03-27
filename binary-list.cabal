@@ -1,5 +1,5 @@
 name:                binary-list
-version:             1.0.1.0
+version:             1.1.0.0
 synopsis:            Lists of length a power of two.
 description:         Implementation of lists whose number of elements is a
                      power of two. Binary lists have this property by definition,
@@ -23,7 +23,7 @@ maintainer:          dhelta.diaz@gmail.com
 bug-reports:         https://github.com/Daniel-Diaz/binary-list/issues
 category:            Data
 build-type:          Simple
-cabal-version:       >=1.10
+cabal-version:       >= 1.10
 
 library
   exposed-modules:     Data.BinaryList, Data.BinaryList.Serialize

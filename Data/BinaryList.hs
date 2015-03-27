@@ -44,7 +44,6 @@ module Data.BinaryList (
   , generateM
     -- * Queries
   , lengthExponent
-  , length
   , lookup
   , head
   , last
@@ -75,19 +74,18 @@ module Data.BinaryList (
     -- $fft
   ) where
 
-import Prelude hiding ( length,lookup,replicate,head,last
-                      , zip,unzip,zipWith,reverse,foldr1
-                      , take,map,foldr )
-import qualified Prelude
+import Prelude hiding
+  ( map, head, last
+  , reverse, replicate
+  , take, lookup
+  , zip, unzip, zipWith
+    )
+import Data.Foldable (fold,toList)
 import Foreign.Storable (sizeOf)
 import Data.List (find)
 import Data.BinaryList.Internal
-import Control.Applicative (Applicative (..),(<$>))
 import Control.Applicative.Backwards
 import Control.Arrow ((***))
-import Data.Monoid (mappend)
-import Data.Foldable (Foldable (..),toList)
-import Data.Traversable (Traversable (..))
 import Control.Monad.Trans.State
   ( StateT (..)
   , evalStateT ,evalState
@@ -112,10 +110,6 @@ singleton = ListEnd
 lengthExponent :: BinList a -> Exponent
 lengthExponent (ListNode n _ _) = n
 lengthExponent (ListEnd _) = 0
-
--- | /O(1)/. Number of elements in the list.
-length :: BinList a -> Int
-length = (2^) . lengthExponent
 
 {-# RULES
        "Data.BinaryList: length equality"
@@ -547,6 +541,7 @@ instance Foldable BinList where
   fold = foldr1 mappend
   foldl1 = foldr1
   foldMap f = fold . fmap f
+  length = (2^) . lengthExponent
 
 instance Traversable BinList where
   sequenceA (ListEnd f) = ListEnd <$> f
