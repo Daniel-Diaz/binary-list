@@ -16,6 +16,9 @@ description:         Implementation of lists whose number of elements is a
                      .
                      The package contains an additional module with utilities for
                      the (de)serialization of binary lists.
+                     .
+                     /Warning: to use this version, you need at least GHC-7.10. I will submit/
+                     /a new version with backwards compatibility very soon. Stay tuned!/
 license:             BSD3
 license-file:        LICENSE
 author:              Daniel Díaz
