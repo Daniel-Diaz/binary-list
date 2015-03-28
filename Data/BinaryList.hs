@@ -49,7 +49,6 @@ module Data.BinaryList (
 #if !MIN_VERSION_base(4,8,0)
   , length
 #endif
-  , length
   , lookup
   , head
   , last
