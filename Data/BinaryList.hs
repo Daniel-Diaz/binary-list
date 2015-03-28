@@ -87,7 +87,7 @@ import Prelude hiding
   , foldr1, length, foldr
     )
 #if MIN_VERSION_base(4,8,0)
-import Prelude (length)
+import Prelude (length, foldr, foldr1)
 #endif
 import Data.Foldable (fold,toList)
 import Foreign.Storable (sizeOf)
