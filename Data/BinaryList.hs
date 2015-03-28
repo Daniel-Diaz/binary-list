@@ -85,8 +85,11 @@ import Prelude hiding
   , reverse, replicate
   , take, lookup
   , zip, unzip, zipWith
-  , foldr1
+  , foldr1, length
     )
+#if MIN_VERSION_base(4,8,0)
+import Prelude (length)
+#endif
 import Data.Foldable (fold,toList)
 import Foreign.Storable (sizeOf)
 import Data.List (find)
@@ -109,6 +112,7 @@ import Data.Word (Word8)
 import Data.Foldable (Foldable (..))
 import Data.Traversable (Traversable (..))
 import Control.Applicative (Applicative (..), (<$>))
+import Data.Monoid (mappend)
 
 -- | /O(1)/. Number of elements in the list.
 length :: BinList a -> Int
