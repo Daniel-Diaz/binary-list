@@ -85,7 +85,7 @@ import Prelude hiding
   , reverse, replicate
   , take, lookup
   , zip, unzip, zipWith
-  , foldr1, length
+  , foldr1, length, foldr
     )
 #if MIN_VERSION_base(4,8,0)
 import Prelude (length)
@@ -109,6 +109,7 @@ import Data.Word (Word8)
 -- GHC-7.8 compatibility
 #if !MIN_VERSION_base(4,8,0)
 
+import qualified Prelude
 import Data.Foldable (Foldable (..))
 import Data.Traversable (Traversable (..))
 import Control.Applicative (Applicative (..), (<$>))
