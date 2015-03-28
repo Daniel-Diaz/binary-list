@@ -1,4 +1,6 @@
 
+{-# LANGUAGE CPP #-}
+
 -- | Binary lists are lists whose number of elements is a power of two.
 --   This data structure is efficient for some computations like:
 --
@@ -44,6 +46,10 @@ module Data.BinaryList (
   , generateM
     -- * Queries
   , lengthExponent
+#if !MIN_VERSION_base(4,8,0)
+  , length
+#endif
+  , length
   , lookup
   , head
   , last
@@ -95,6 +101,19 @@ import Control.Monad.Trans.Class (lift)
 import Data.Functor.Identity (Identity (..))
 import Control.Applicative.PhantomState
 import Data.Word (Word8)
+
+-- GHC-7.8 compatibility
+#if !MIN_VERSION_base(4,8,0)
+
+import Data.Foldable (Foldable (..))
+import Data.Traversable (Traversable (..))
+
+-- | /O(1)/. Number of elements in the list.
+length :: BinList a -> Int
+length = (2^) . lengthExponent
+
+#endif
+
 
 -- | An exponent.
 type Exponent = Word8
