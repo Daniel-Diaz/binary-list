@@ -85,6 +85,7 @@ import Prelude hiding
   , reverse, replicate
   , take, lookup
   , zip, unzip, zipWith
+  , foldr1
     )
 import Data.Foldable (fold,toList)
 import Foreign.Storable (sizeOf)
@@ -107,6 +108,7 @@ import Data.Word (Word8)
 
 import Data.Foldable (Foldable (..))
 import Data.Traversable (Traversable (..))
+import Control.Applicative (Applicative (..), (<$>))
 
 -- | /O(1)/. Number of elements in the list.
 length :: BinList a -> Int
@@ -560,7 +562,9 @@ instance Foldable BinList where
   fold = foldr1 mappend
   foldl1 = foldr1
   foldMap f = fold . fmap f
+#if MIN_VERSION_base(4,8,0)
   length = (2^) . lengthExponent
+#endif
 
 instance Traversable BinList where
   sequenceA (ListEnd f) = ListEnd <$> f
