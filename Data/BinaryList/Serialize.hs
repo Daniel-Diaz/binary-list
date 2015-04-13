@@ -113,6 +113,11 @@ instance NFData a => NFData (Decoded a) where
   rnf (FinalResult   xs  b) = rnf xs  `seq` rnf b
   rnf (DecodingError str b) = rnf str `seq` rnf b
 
+instance Functor Decoded where
+  fmap f (PartialResult xs  d) = PartialResult (fmap f xs) $ fmap f d
+  fmap f (FinalResult   xs  b) = FinalResult   (fmap f xs) b
+  fmap _ (DecodingError str b) = DecodingError str b
+
 -- | Get the final result of a decoding process, unless it returned an error, in which
 --   case this error is returned as a 'String'.
 fromDecoded :: Decoded a -> Either String (BinList a)
