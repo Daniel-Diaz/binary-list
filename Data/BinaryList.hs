@@ -341,6 +341,7 @@ zipAndJoin f g = go
 
 -- | /O(n)/. Zip two binary lists using an operator.
 zipWith :: (a -> b -> c) -> BinList a -> BinList b -> BinList c
+{-# INLINE[1] zipWith #-}
 zipWith f = go
   where
     -- Recursion
