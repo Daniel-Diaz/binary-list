@@ -359,7 +359,8 @@ zipWith f = go
     -- Recursion assuming both lists have the same length
     goEquals (ListNode n l r) (ListNode _ l' r') =
                      ListNode n (goEquals l l') (goEquals r r')
-    goEquals xs ys = ListEnd $ f (head xs) (head ys)
+    goEquals (ListEnd x) (ListEnd y) = ListEnd (f x y)
+    goEquals _ _ = undefined -- this can't happen
 
 -- | /O(n)/. Zip two binary lists in pairs.
 zip :: BinList a -> BinList b -> BinList (a,b)
