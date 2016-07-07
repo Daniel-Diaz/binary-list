@@ -328,8 +328,10 @@ zipAndJoin f g = go
     -- Recursion assuming both lists have the same length
     goEquals (ListNode n l r) (ListNode _ l' r') =
                      ListNode (n+1) (goEquals l l') (goEquals r r')
-    goEquals xs ys = let (x,y) = f $ g (head xs) (head ys)
-                     in  ListNode 1 (ListEnd x) (ListEnd y)
+    goEquals (ListEnd x) (ListEnd y) =
+      let (x',y') = f $ g x y
+      in  ListNode 1 (ListEnd x') (ListEnd y')
+    goEquals _ _ = undefined -- This can't happen!
 
 {-# RULES
       "Data.BinaryList: pairBuilder/zipWith"
