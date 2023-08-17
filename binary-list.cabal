@@ -18,8 +18,8 @@ description:         Implementation of lists whose number of elements is a
                      the (de)serialization of binary lists.
 license:             BSD3
 license-file:        LICENSE
-author:              Daniel Díaz
-maintainer:          dhelta.diaz@gmail.com
+author:              Daniel Casanueva
+maintainer:          daniel.casanueva@proton.me
 bug-reports:         https://github.com/Daniel-Diaz/binary-list/issues
 category:            Data
 build-type:          Simple
